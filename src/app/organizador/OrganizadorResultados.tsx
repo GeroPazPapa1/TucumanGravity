@@ -1,0 +1,305 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/types";
+
+type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
+type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
+type Perfil = Database["public"]["Tables"]["perfiles"]["Row"];
+type Resultado = Database["public"]["Tables"]["resultados"]["Row"];
+
+interface FilaForm {
+  posicion: number;
+  puntos: number;
+}
+
+function filasIniciales(corredores: Perfil[], carreraId: string, resultados: Resultado[]) {
+  const iniciales: Record<string, FilaForm> = {};
+  corredores.forEach((c, index) => {
+    const existente = resultados.find((r) => r.carrera_id === carreraId && r.corredor_id === c.id);
+    iniciales[c.id] = existente
+      ? { posicion: existente.posicion, puntos: existente.puntos }
+      : { posicion: index + 1, puntos: 0 };
+  });
+  return iniciales;
+}
+
+interface CargaResultadosFormProps {
+  carreraId: string;
+  categoriaId: string;
+  corredoresCategoria: Perfil[];
+  resultadosCategoria: Resultado[];
+  onGuardado: () => void;
+}
+
+function CargaResultadosForm({
+  carreraId,
+  categoriaId,
+  corredoresCategoria,
+  resultadosCategoria,
+  onGuardado,
+}: CargaResultadosFormProps) {
+  const [filas, setFilas] = useState<Record<string, FilaForm>>(() =>
+    filasIniciales(corredoresCategoria, carreraId, resultadosCategoria)
+  );
+  const [marcarDisputada, setMarcarDisputada] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [confirmado, setConfirmado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function totalActual(corredorId: string) {
+    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntos_iniciales ?? 0;
+    const suma = resultadosCategoria
+      .filter((r) => r.corredor_id === corredorId)
+      .reduce((s, r) => s + r.puntos, 0);
+    return base + suma;
+  }
+
+  function totalConPendientes(corredorId: string) {
+    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntos_iniciales ?? 0;
+    const sumaOtrasCarreras = resultadosCategoria
+      .filter((r) => r.corredor_id === corredorId && r.carrera_id !== carreraId)
+      .reduce((s, r) => s + r.puntos, 0);
+    return base + sumaOtrasCarreras + (filas[corredorId]?.puntos ?? 0);
+  }
+
+  const rankingAntes = useMemo(
+    () =>
+      corredoresCategoria
+        .map((c) => ({ id: c.id, nombre: c.nombre, total: totalActual(c.id) }))
+        .sort((a, b) => b.total - a.total),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [corredoresCategoria, resultadosCategoria]
+  );
+
+  const rankingDespues = useMemo(
+    () =>
+      corredoresCategoria
+        .map((c) => ({ id: c.id, nombre: c.nombre, total: totalConPendientes(c.id) }))
+        .sort((a, b) => b.total - a.total),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [corredoresCategoria, resultadosCategoria, filas]
+  );
+
+  async function confirmar() {
+    setGuardando(true);
+    setError(null);
+
+    const supabase = createClient();
+    const filasParaGuardar = corredoresCategoria.map((c) => ({
+      carrera_id: carreraId,
+      corredor_id: c.id,
+      categoria_id: categoriaId,
+      posicion: filas[c.id]?.posicion ?? 0,
+      puntos: filas[c.id]?.puntos ?? 0,
+    }));
+
+    const { error: upsertError } = await supabase
+      .from("resultados")
+      .upsert(filasParaGuardar, { onConflict: "carrera_id,corredor_id" });
+
+    if (upsertError) {
+      setError(upsertError.message);
+      setGuardando(false);
+      return;
+    }
+
+    if (marcarDisputada) {
+      await supabase.from("carreras").update({ estado: "disputada" }).eq("id", carreraId);
+    }
+
+    setGuardando(false);
+    setConfirmado(true);
+    setTimeout(() => setConfirmado(false), 2500);
+    onGuardado();
+  }
+
+  if (corredoresCategoria.length === 0) {
+    return (
+      <p className="text-center text-sm text-tg-text-dim py-10">
+        Todavía no hay corredores registrados en esta categoría. Necesitás que se registren en la app antes de
+        poder cargarles resultados.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+        <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-tg-text-dim">
+          <span>Corredor</span>
+          <span className="text-center">Pos.</span>
+          <span className="text-center">Puntos</span>
+        </div>
+        {corredoresCategoria.map((c) => (
+          <div key={c.id} className="grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 items-center">
+            <span className="text-sm truncate">{c.nombre}</span>
+            <input
+              type="number"
+              min={1}
+              value={filas[c.id]?.posicion ?? ""}
+              onChange={(e) =>
+                setFilas((f) => ({ ...f, [c.id]: { ...f[c.id], posicion: Number(e.target.value) || 0 } }))
+              }
+              className="w-full rounded-md border border-tg-border bg-tg-bg px-2 py-1.5 text-sm text-center"
+            />
+            <input
+              type="number"
+              min={0}
+              value={filas[c.id]?.puntos ?? ""}
+              onChange={(e) =>
+                setFilas((f) => ({ ...f, [c.id]: { ...f[c.id], puntos: Number(e.target.value) || 0 } }))
+              }
+              className="w-full rounded-md border border-tg-border bg-tg-bg px-2 py-1.5 text-sm text-center"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">
+          Vista previa del ranking si confirmás
+        </p>
+        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+          {rankingDespues.map((entrada, index) => {
+            const antes = rankingAntes.findIndex((r) => r.id === entrada.id);
+            const delta = antes - index;
+            return (
+              <div key={entrada.id} className="flex items-center gap-3 px-3 py-2">
+                <span className="font-display text-lg w-6 text-center text-tg-text-dim">{index + 1}</span>
+                <span className="flex-1 text-sm truncate">{entrada.nombre}</span>
+                {delta !== 0 && (
+                  <span className={`text-xs font-semibold ${delta > 0 ? "text-tg-green" : "text-tg-magenta"}`}>
+                    {delta > 0 ? `↑${delta}` : `↓${Math.abs(delta)}`}
+                  </span>
+                )}
+                <span className="font-display text-tg-green text-base w-12 text-right">{entrada.total}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <label className="flex items-center gap-2 text-sm text-tg-text-dim">
+        <input
+          type="checkbox"
+          checked={marcarDisputada}
+          onChange={(e) => setMarcarDisputada(e.target.checked)}
+          className="accent-tg-green w-4 h-4"
+        />
+        Marcar esta fecha como disputada al confirmar
+      </label>
+
+      {error && <p className="text-sm text-tg-magenta">{error}</p>}
+
+      <button
+        onClick={confirmar}
+        disabled={guardando}
+        className="rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
+      >
+        {guardando ? "Guardando…" : "Confirmar carga de resultados"}
+      </button>
+
+      <AnimatePresence>
+        {confirmado && (
+          <motion.p
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-center text-sm text-tg-green"
+          >
+            ✓ Resultados cargados. El ranking ya está actualizado.
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function OrganizadorResultados() {
+  const [carreras, setCarreras] = useState<Carrera[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [carreraId, setCarreraId] = useState("");
+  const [categoriaId, setCategoriaId] = useState("");
+  const [corredoresCategoria, setCorredoresCategoria] = useState<Perfil[]>([]);
+  const [resultadosCategoria, setResultadosCategoria] = useState<Resultado[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const [{ data: c }, { data: cat }] = await Promise.all([
+        supabase.from("carreras").select("*").order("numero"),
+        supabase.from("categorias").select("*").order("orden"),
+      ]);
+      setCarreras(c ?? []);
+      setCategorias(cat ?? []);
+      setCarreraId(c?.[0]?.id ?? "");
+      setCategoriaId(cat?.[0]?.id ?? "");
+      setCargando(false);
+    })();
+  }, []);
+
+  async function cargarDatosCategoria(catId: string) {
+    const supabase = createClient();
+    const [{ data: corredores }, { data: resultados }] = await Promise.all([
+      supabase.from("perfiles").select("*").eq("categoria_id", catId).order("nombre"),
+      supabase.from("resultados").select("*").eq("categoria_id", catId),
+    ]);
+    setCorredoresCategoria(corredores ?? []);
+    setResultadosCategoria(resultados ?? []);
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga datos de Supabase al cambiar de categoría
+    if (categoriaId) cargarDatosCategoria(categoriaId);
+  }, [categoriaId]);
+
+  if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando…</div>;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Fecha</span>
+          <select
+            value={carreraId}
+            onChange={(e) => setCarreraId(e.target.value)}
+            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+          >
+            {carreras.map((c) => (
+              <option key={c.id} value={c.id}>
+                #{c.numero} · {c.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Categoría</span>
+          <select
+            value={categoriaId}
+            onChange={(e) => setCategoriaId(e.target.value)}
+            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+          >
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <CargaResultadosForm
+        key={`${carreraId}__${categoriaId}`}
+        carreraId={carreraId}
+        categoriaId={categoriaId}
+        corredoresCategoria={corredoresCategoria}
+        resultadosCategoria={resultadosCategoria}
+        onGuardado={() => cargarDatosCategoria(categoriaId)}
+      />
+    </div>
+  );
+}

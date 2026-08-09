@@ -1,0 +1,89 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+import RiderAvatar from "./RiderAvatar";
+
+export interface FilaRanking {
+  corredorId: string;
+  nombre: string;
+  numero: number | null;
+  bici: string | null;
+  equipo: string | null;
+  fotoUrl: string | null;
+  categoriaId: string;
+  totalPuntos: number;
+  esPrecarga: boolean;
+}
+
+interface RankingListProps {
+  filas: FilaRanking[];
+}
+
+const listVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -12 },
+  show: { opacity: 1, x: 0 },
+};
+
+export default function RankingList({ filas }: RankingListProps) {
+  if (filas.length === 0) {
+    return (
+      <p className="text-center text-tg-text-dim text-sm py-10">
+        Todavía no hay corredores cargados en esta categoría.
+      </p>
+    );
+  }
+
+  return (
+    <motion.ol initial="hidden" animate="show" variants={listVariants} className="flex flex-col gap-2">
+      {filas.map((fila, index) => {
+        const posicion = index + 1;
+        const podio = posicion <= 3;
+        const oro = posicion === 1;
+
+        const contenido = (
+          <>
+            {podio && <div className="absolute left-0 top-0 bottom-0 w-1 tg-gradient-bar-animated" />}
+            <span className="font-display text-2xl w-8 text-center text-tg-text-dim shrink-0">{posicion}</span>
+            <RiderAvatar nombre={fila.nombre} fotoUrl={fila.fotoUrl} categoriaId={fila.categoriaId} size={44} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate flex items-center gap-2">
+                {fila.nombre}
+                {fila.esPrecarga && (
+                  <span className="text-[9px] uppercase tracking-widest text-tg-text-dim border border-tg-border rounded-full px-1.5 py-0.5">
+                    sin registrar
+                  </span>
+                )}
+              </p>
+              {fila.equipo && <p className="text-xs text-tg-text-dim truncate">{fila.equipo}</p>}
+            </div>
+            <p className="font-display text-tg-green text-xl shrink-0">{fila.totalPuntos}</p>
+          </>
+        );
+
+        const className = `flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-0.5 ${
+          podio
+            ? `border-tg-border bg-tg-surface relative overflow-hidden ${oro ? "tg-glow-podium" : ""}`
+            : "border-tg-border bg-tg-surface/60 hover:bg-tg-surface"
+        }`;
+
+        return (
+          <motion.li key={fila.corredorId} variants={itemVariants}>
+            {fila.esPrecarga ? (
+              <div className={className}>{contenido}</div>
+            ) : (
+              <Link href={`/corredores/${fila.corredorId}`} className={className}>
+                {contenido}
+              </Link>
+            )}
+          </motion.li>
+        );
+      })}
+    </motion.ol>
+  );
+}
