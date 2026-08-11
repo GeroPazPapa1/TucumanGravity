@@ -93,6 +93,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
         bici: form.bici,
         equipo: form.equipo,
         foto_url: form.foto_url,
+        federado: form.federado,
       })
       .eq("id", user.id);
 
@@ -150,6 +151,22 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
             placeholder="Ej: Pachamama Racing"
           />
         </Campo>
+
+        <label className="flex items-start gap-3 rounded-lg border border-tg-border bg-tg-surface px-3 py-3">
+          <input
+            type="checkbox"
+            checked={form.federado}
+            onChange={(e) => setForm({ ...form, federado: e.target.checked })}
+            className="accent-tg-green w-4 h-4 mt-0.5 shrink-0"
+          />
+          <span className="text-sm">
+            <span className="block font-semibold">Estoy federado (licencia FACiMo vigente)</span>
+            <span className="block text-xs text-tg-text-dim mt-0.5">
+              Dato autodeclarado — algunos torneos, como la Copa Argentina, solo suman puntos oficiales a
+              corredores federados.
+            </span>
+          </span>
+        </label>
 
         {error && <p className="text-sm text-tg-magenta">{error}</p>}
 

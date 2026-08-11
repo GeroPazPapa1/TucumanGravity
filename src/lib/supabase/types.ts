@@ -24,6 +24,10 @@ export interface Database {
           logo_url: string | null;
           color_primario: string | null;
           color_secundario: string | null;
+          descartes_permitidos: number;
+          presentismo_puntos_por_fecha: number;
+          requiere_federado: boolean;
+          suma_fecha_regional: boolean;
           created_at: string;
         };
         Insert: {
@@ -34,6 +38,10 @@ export interface Database {
           logo_url?: string | null;
           color_primario?: string | null;
           color_secundario?: string | null;
+          descartes_permitidos?: number;
+          presentismo_puntos_por_fecha?: number;
+          requiere_federado?: boolean;
+          suma_fecha_regional?: boolean;
         };
         Update: Partial<{
           nombre: string;
@@ -42,6 +50,10 @@ export interface Database {
           logo_url: string | null;
           color_primario: string | null;
           color_secundario: string | null;
+          descartes_permitidos: number;
+          presentismo_puntos_por_fecha: number;
+          requiere_federado: boolean;
+          suma_fecha_regional: boolean;
         }>;
         Relationships: [];
       };
@@ -116,6 +128,7 @@ export interface Database {
           bici: string | null;
           equipo: string | null;
           foto_url: string | null;
+          federado: boolean;
           rol: Rol;
           created_at: string;
         };
@@ -127,6 +140,7 @@ export interface Database {
           bici?: string | null;
           equipo?: string | null;
           foto_url?: string | null;
+          federado?: boolean;
           rol?: Rol;
         };
         Update: Partial<{
@@ -136,6 +150,7 @@ export interface Database {
           bici: string | null;
           equipo: string | null;
           foto_url: string | null;
+          federado: boolean;
           rol: Rol;
         }>;
         Relationships: [];
@@ -232,6 +247,12 @@ export interface Database {
         }>;
         Relationships: [];
       };
+      puntos_por_posicion: {
+        Row: { torneo_id: string; posicion: number; puntos: number };
+        Insert: { torneo_id: string; posicion: number; puntos: number };
+        Update: Partial<{ puntos: number }>;
+        Relationships: [];
+      };
     };
     Views: {
       ranking_general: {
@@ -247,6 +268,16 @@ export interface Database {
           puntos_base: number;
           total_puntos: number;
           es_precarga: boolean;
+        };
+        Relationships: [];
+      };
+      ranking_simple_posicion: {
+        Row: {
+          torneo_id: string;
+          categoria_id: string;
+          corredor_id: string;
+          total_puntos: number;
+          posicion: number;
         };
         Relationships: [];
       };

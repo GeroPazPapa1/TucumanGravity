@@ -61,6 +61,20 @@ export default function CarreraDetail({
         Cómo llegar en Google Maps
       </a>
 
+      <div className="rounded-xl border border-dashed border-tg-border bg-tg-surface/60 p-4 flex items-center gap-3">
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-tg-green opacity-60 animate-ping" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-tg-green" />
+        </span>
+        <div className="flex-1">
+          <p className="text-xs font-semibold uppercase tracking-widest text-tg-text-dim">Tiempos en vivo</p>
+          <p className="text-sm text-tg-text-dim mt-0.5">
+            Acá va a ir el cronometraje en vivo de Cronometraje Instantáneo el día de la carrera — espacio
+            reservado, listo para conectar.
+          </p>
+        </div>
+      </div>
+
       {grupos.length > 0 ? (
         <ResultadosPorFecha grupos={grupos} />
       ) : (
