@@ -107,7 +107,12 @@ grant select on public.ranking_simple_posicion to anon, authenticated;
 --    presentismo, filtro de federado y bono de fecha regional.
 -- ============================================================================
 
-create or replace view public.ranking_general
+-- drop en vez de replace: la versión anterior de la vista tenía
+-- total_puntos como bigint, y Postgres no deja cambiar el tipo de una
+-- columna con "create or replace view" — hay que tirarla y crearla de nuevo.
+drop view if exists public.ranking_general;
+
+create view public.ranking_general
 with (security_invoker = true) as
 select
   ti.torneo_id,
@@ -125,7 +130,7 @@ select
     - case when t.descartes_permitidos >= 1 and base.cant_fechas > 0 then base.peor else 0 end
     + (t.presentismo_puntos_por_fecha * base.cant_fechas)
     + coalesce(regional.puntos_regional, 0)
-  )::int as total_puntos,
+  ) as total_puntos,
   false as es_precarga
 from public.torneo_inscripciones ti
 join public.perfiles p on p.id = ti.perfil_id
