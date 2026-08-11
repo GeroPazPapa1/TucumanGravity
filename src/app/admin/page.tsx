@@ -151,7 +151,7 @@ function PanelSuperAdmin() {
     await cargarTorneo(torneoSeleccionado);
   }
 
-  if (cargando) return <div className="py-16 text-center text-sm text-tg-text-dim">Cargando…</div>;
+  if (cargando) return <div className="py-16 text-center text-sm text-plat-text-dim">Cargando…</div>;
 
   const precargaSinVincular = precarga.filter((p) => !p.perfil_id);
   const perfilesYaVinculados = new Set(precarga.filter((p) => p.perfil_id).map((p) => p.perfil_id));
@@ -161,14 +161,14 @@ function PanelSuperAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">SUPER ADMIN</h1>
-        <p className="text-tg-text-dim text-sm">Control total: torneos, usuarios, identidad visual y sponsors.</p>
+        <h1 className="font-display text-2xl tracking-wide text-plat-text">SUPER ADMIN</h1>
+        <p className="text-plat-text-dim text-sm">Control total: torneos, usuarios, identidad visual y sponsors.</p>
       </div>
 
-      {mensaje && <p className="text-sm text-tg-green">{mensaje}</p>}
+      {mensaje && <p className="text-sm text-plat-celeste">{mensaje}</p>}
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Resumen de la plataforma</h2>
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Resumen de la plataforma</h2>
         <div className="grid grid-cols-3 gap-3">
           <Stat valor={torneos.length} label="Torneos" />
           <Stat valor={perfiles.length} label="Corredores" />
@@ -177,17 +177,17 @@ function PanelSuperAdmin() {
       </section>
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Torneos</h2>
-        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Torneos</h2>
+        <div className="rounded-xl border border-plat-border bg-plat-surface divide-y divide-plat-border">
           {torneos.map((t) => (
             <div key={t.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="flex-1 text-sm font-semibold">{t.nombre}</span>
+              <span className="flex-1 text-sm font-semibold text-plat-text">{t.nombre}</span>
               <button
                 onClick={() => alternarActivo(t)}
                 className={`text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full border ${
                   t.activo
-                    ? "text-tg-green border-tg-green/40 bg-tg-green/10"
-                    : "text-tg-text-dim border-tg-border"
+                    ? "text-plat-celeste border-plat-celeste/40 bg-plat-celeste/10"
+                    : "text-plat-text-dim border-plat-border"
                 }`}
               >
                 {t.activo ? "Activo" : "Inactivo"}
@@ -198,33 +198,33 @@ function PanelSuperAdmin() {
       </section>
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Identidad visual</h2>
-        <div className="rounded-xl border border-tg-border bg-tg-surface p-4 flex items-center gap-4">
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Identidad visual</h2>
+        <div className="rounded-xl border border-plat-border bg-plat-surface p-4 flex items-center gap-4">
           <Logo size={56} />
           <div className="flex-1">
-            <p className="font-semibold text-sm">Escudo oficial</p>
-            <p className="text-xs text-tg-text-dim">Gestión de assets de marca por torneo: próximamente en este panel.</p>
+            <p className="font-semibold text-sm text-plat-text">Escudo oficial</p>
+            <p className="text-xs text-plat-text-dim">Gestión de assets de marca por torneo: próximamente en este panel.</p>
           </div>
         </div>
       </section>
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Sponsors</h2>
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Sponsors</h2>
         <div className="flex gap-3 flex-wrap">
-          <div className="px-4 py-3 rounded-lg border border-tg-border bg-tg-surface font-display text-sm tracking-wide">Radoc</div>
-          <div className="px-4 py-3 rounded-lg border border-tg-border bg-tg-surface font-display text-sm tracking-wide">Commencal</div>
-          <div className="px-4 py-3 rounded-lg border border-dashed border-tg-border text-xs text-tg-text-dim flex items-center">
+          <div className="px-4 py-3 rounded-lg border border-plat-border bg-plat-surface font-display text-sm tracking-wide text-plat-text">Radoc</div>
+          <div className="px-4 py-3 rounded-lg border border-plat-border bg-plat-surface font-display text-sm tracking-wide text-plat-text">Commencal</div>
+          <div className="px-4 py-3 rounded-lg border border-dashed border-plat-border text-xs text-plat-text-dim flex items-center">
             + Agregar sponsor (próximamente)
           </div>
         </div>
       </section>
 
-      <section className="border-t border-tg-border pt-5">
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Gestión por torneo</h2>
+      <section className="border-t border-plat-border pt-5">
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Gestión por torneo</h2>
         <select
           value={torneoSeleccionado}
           onChange={(e) => setTorneoSeleccionado(e.target.value)}
-          className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm mb-4"
+          className="w-full rounded-lg border border-plat-border bg-plat-surface text-plat-text px-3 py-2.5 text-sm mb-4"
         >
           {torneos.map((t) => (
             <option key={t.id} value={t.id}>
@@ -236,16 +236,16 @@ function PanelSuperAdmin() {
         {torneoActual && (
           <div className="flex flex-col gap-6">
             <div>
-              <p className="text-xs uppercase tracking-widest text-tg-text-dim mb-2">Organizadores</p>
-              <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border mb-2">
+              <p className="text-xs uppercase tracking-widest text-plat-text-dim mb-2">Organizadores</p>
+              <div className="rounded-xl border border-plat-border bg-plat-surface divide-y divide-plat-border mb-2">
                 {miembros.length === 0 && (
-                  <p className="px-4 py-3 text-sm text-tg-text-dim">Todavía nadie organiza este torneo.</p>
+                  <p className="px-4 py-3 text-sm text-plat-text-dim">Todavía nadie organiza este torneo.</p>
                 )}
                 {miembros.map((m) => {
                   const perfil = perfiles.find((p) => p.id === m.perfil_id);
                   return (
                     <div key={m.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="flex-1 text-sm">{perfil?.nombre ?? m.perfil_id}</span>
+                      <span className="flex-1 text-sm text-plat-text">{perfil?.nombre ?? m.perfil_id}</span>
                       <button
                         onClick={() => quitarOrganizador(m.perfil_id)}
                         className="text-[10px] uppercase tracking-widest text-tg-magenta"
@@ -260,7 +260,7 @@ function PanelSuperAdmin() {
                 <select
                   value={nuevoOrganizador}
                   onChange={(e) => setNuevoOrganizador(e.target.value)}
-                  className="flex-1 rounded-lg border border-tg-border bg-tg-surface px-2 py-1.5 text-xs"
+                  className="flex-1 rounded-lg border border-plat-border bg-plat-surface text-plat-text px-2 py-1.5 text-xs"
                 >
                   <option value="">Elegir corredor…</option>
                   {perfiles
@@ -274,7 +274,7 @@ function PanelSuperAdmin() {
                 <button
                   onClick={agregarOrganizador}
                   disabled={!nuevoOrganizador}
-                  className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-3 disabled:opacity-40"
+                  className="rounded-lg bg-plat-celeste text-white text-xs font-semibold uppercase px-3 disabled:opacity-40"
                 >
                   Asignar
                 </button>
@@ -283,10 +283,10 @@ function PanelSuperAdmin() {
 
             {precargaSinVincular.length > 0 && (
               <div>
-                <p className="text-xs uppercase tracking-widest text-tg-text-dim mb-2">
+                <p className="text-xs uppercase tracking-widest text-plat-text-dim mb-2">
                   Ranking histórico sin vincular ({precargaSinVincular.length})
                 </p>
-                <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+                <div className="rounded-xl border border-plat-border bg-plat-surface divide-y divide-plat-border">
                   {precargaSinVincular.map((p) => {
                     const candidatos = perfiles.filter((perfil) => {
                       const insc = inscripciones.find((i) => i.perfil_id === perfil.id);
@@ -295,14 +295,14 @@ function PanelSuperAdmin() {
                     return (
                       <div key={p.id} className="flex flex-col gap-2 px-3 py-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold">{p.nombre}</span>
-                          <span className="font-display text-tg-green text-sm">{p.puntos_iniciales} pts</span>
+                          <span className="text-sm font-semibold text-plat-text">{p.nombre}</span>
+                          <span className="font-display text-plat-celeste text-sm">{p.puntos_iniciales} pts</span>
                         </div>
                         <div className="flex gap-2">
                           <select
                             value={seleccion[p.id] ?? ""}
                             onChange={(e) => setSeleccion((s) => ({ ...s, [p.id]: e.target.value }))}
-                            className="flex-1 rounded-lg border border-tg-border bg-tg-bg px-2 py-1.5 text-xs"
+                            className="flex-1 rounded-lg border border-plat-border bg-plat-surface-alt text-plat-text px-2 py-1.5 text-xs"
                           >
                             <option value="">
                               {candidatos.length ? "Elegir cuenta registrada…" : "Nadie inscripto en esa categoría todavía"}
@@ -316,7 +316,7 @@ function PanelSuperAdmin() {
                           <button
                             onClick={() => vincular(p.id)}
                             disabled={!seleccion[p.id] || vinculando === p.id}
-                            className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-3 disabled:opacity-40"
+                            className="rounded-lg bg-plat-celeste text-white text-xs font-semibold uppercase px-3 disabled:opacity-40"
                           >
                             {vinculando === p.id ? "…" : "Vincular"}
                           </button>
@@ -329,7 +329,7 @@ function PanelSuperAdmin() {
             )}
 
             {categorias.length === 0 && (
-              <p className="text-sm text-tg-text-dim">
+              <p className="text-sm text-plat-text-dim">
                 Este torneo todavía no tiene categorías — el organizador las carga desde su panel.
               </p>
             )}
@@ -338,22 +338,22 @@ function PanelSuperAdmin() {
       </section>
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">
+        <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">
           Corredores registrados ({perfiles.length})
         </h2>
         <motion.div
           initial="hidden"
           animate="show"
           variants={listVariants}
-          className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border max-h-[420px] overflow-y-auto"
+          className="rounded-xl border border-plat-border bg-plat-surface divide-y divide-plat-border max-h-[420px] overflow-y-auto"
         >
           {perfiles.map((p) => (
             <motion.div key={p.id} variants={itemVariants} className="flex items-center gap-3 px-3 py-2.5">
-              <span className="flex-1 text-sm truncate">{p.nombre}</span>
+              <span className="flex-1 text-sm truncate text-plat-text">{p.nombre}</span>
               <select
                 value={p.rol}
                 onChange={(e) => cambiarRol(p.id, e.target.value as Rol)}
-                className="rounded-md border border-tg-border bg-tg-bg px-2 py-1 text-xs"
+                className="rounded-md border border-plat-border bg-plat-surface-alt text-plat-text px-2 py-1 text-xs"
               >
                 {(Object.keys(nombreRol) as Rol[]).map((r) => (
                   <option key={r} value={r}>
@@ -371,9 +371,9 @@ function PanelSuperAdmin() {
 
 function Stat({ valor, label }: { valor: string | number; label: string }) {
   return (
-    <div className="rounded-xl border border-tg-border bg-tg-surface p-3 text-center">
-      <p className="font-display text-2xl text-tg-green">{valor}</p>
-      <p className="text-[10px] uppercase tracking-widest text-tg-text-dim mt-1">{label}</p>
+    <div className="rounded-xl border border-plat-border bg-plat-surface p-3 text-center">
+      <p className="font-display text-2xl text-plat-celeste">{valor}</p>
+      <p className="text-[10px] uppercase tracking-widest text-plat-text-dim mt-1">{label}</p>
     </div>
   );
 }

@@ -15,6 +15,20 @@
   --tg-amber: #ff8a00;
 
   --tg-gradient: linear-gradient(90deg, var(--tg-magenta), var(--tg-violet), var(--tg-green));
+
+  /* Paleta de la app madre (fuera de un torneo): blanco con celeste,
+     inspirada en la bandera — con el mismo degradé de marca como acento,
+     no un blanco genérico. Los tokens tg-* de arriba NO se tocan: cada
+     torneo sigue exactamente igual que siempre. */
+  --plat-bg: #eef6fb;
+  --plat-surface: #ffffff;
+  --plat-surface-alt: #f4fafd;
+  --plat-border: #d7e8f2;
+  --plat-text: #0d2436;
+  --plat-text-dim: #5c7a8c;
+
+  --plat-celeste: #2a94d6;
+  --plat-celeste-dark: #16729f;
 }
 
 @theme inline {
@@ -30,6 +44,15 @@
   --color-tg-cyan: var(--tg-cyan);
   --color-tg-amber: var(--tg-amber);
 
+  --color-plat-bg: var(--plat-bg);
+  --color-plat-surface: var(--plat-surface);
+  --color-plat-surface-alt: var(--plat-surface-alt);
+  --color-plat-border: var(--plat-border);
+  --color-plat-text: var(--plat-text);
+  --color-plat-text-dim: var(--plat-text-dim);
+  --color-plat-celeste: var(--plat-celeste);
+  --color-plat-celeste-dark: var(--plat-celeste-dark);
+
   --font-display: var(--font-anton);
   --font-sans: var(--font-barlow);
 }
@@ -40,11 +63,22 @@ html {
 }
 
 body {
+  background: var(--tg-bg);
+  color: var(--tg-text);
+}
+
+.tg-bg-torneo {
   background:
     radial-gradient(ellipse 900px 500px at 50% -10%, rgba(138, 43, 226, 0.16), transparent),
     radial-gradient(ellipse 700px 400px at 100% 0%, rgba(255, 30, 142, 0.1), transparent),
     var(--tg-bg);
-  color: var(--tg-text);
+}
+
+.plat-bg-app {
+  background:
+    radial-gradient(ellipse 800px 450px at 15% -10%, rgba(42, 148, 214, 0.14), transparent),
+    radial-gradient(ellipse 700px 400px at 100% 10%, rgba(255, 30, 142, 0.06), transparent),
+    var(--plat-bg);
 }
 
 .tg-gradient-bar {

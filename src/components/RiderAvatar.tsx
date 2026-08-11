@@ -1,4 +1,7 @@
+"use client";
+
 import { getCategoryAccent } from "./categoryColors";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 interface RiderAvatarProps {
   nombre: string;
@@ -19,7 +22,8 @@ function SiluetaBrazosCruzados() {
 }
 
 export default function RiderAvatar({ nombre, fotoUrl, categoriaId, size = 56 }: RiderAvatarProps) {
-  const accent = getCategoryAccent(categoriaId);
+  const enTorneo = useEnTorneo();
+  const accent = getCategoryAccent(categoriaId, !enTorneo);
 
   return (
     <div

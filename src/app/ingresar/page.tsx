@@ -40,31 +40,31 @@ export default function IngresarPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">INICIAR SESIÓN</h1>
-        <p className="text-tg-text-dim text-sm">Entrá a tu cuenta de Downhill App.</p>
+        <h1 className="font-display text-2xl tracking-wide text-plat-text">INICIAR SESIÓN</h1>
+        <p className="text-plat-text-dim text-sm">Entrá a tu cuenta de Downhill App.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="block">
-          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Email</span>
+          <span className="block text-[11px] uppercase tracking-widest text-plat-text-dim mb-1.5">Email</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
             placeholder="vos@ejemplo.com"
           />
         </label>
 
         <label className="block">
-          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Contraseña</span>
+          <span className="block text-[11px] uppercase tracking-widest text-plat-text-dim mb-1.5">Contraseña</span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
           />
         </label>
 
@@ -73,15 +73,15 @@ export default function IngresarPage() {
         <button
           type="submit"
           disabled={enviando}
-          className="mt-1 rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="mt-1 rounded-lg bg-plat-celeste text-white font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           {enviando ? "Entrando…" : "Ingresar"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-tg-text-dim">
+      <p className="text-center text-sm text-plat-text-dim">
         ¿Todavía no tenés cuenta?{" "}
-        <Link href="/registro" className="text-tg-green">
+        <Link href="/registro" className="text-plat-celeste font-semibold">
           Registrate
         </Link>
       </p>

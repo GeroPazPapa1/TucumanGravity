@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/AuthProvider";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 interface RoleGateProps {
   children: React.ReactNode;
@@ -24,9 +25,16 @@ export default function RoleGate({
   seccion,
 }: RoleGateProps) {
   const { user, rol, cargando, esOrganizadorDe } = useAuth();
+  const enTorneo = useEnTorneo();
+
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const accentText = enTorneo ? "text-tg-green" : "text-plat-celeste";
+  const accentBg = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
 
   if (cargando) {
-    return <div className="py-16 text-center text-sm text-tg-text-dim">Cargando…</div>;
+    return <div className={`py-16 text-center text-sm ${dim}`}>Cargando…</div>;
   }
 
   if (!user) {
@@ -34,7 +42,7 @@ export default function RoleGate({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center text-center gap-3 rounded-2xl border border-tg-border bg-tg-surface p-8 mt-6"
+        className={`flex flex-col items-center text-center gap-3 rounded-2xl border ${border} ${surface} p-8 mt-6`}
       >
         <div className="w-12 h-12 rounded-full bg-tg-cyan/15 border border-tg-cyan/40 flex items-center justify-center">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-tg-cyan">
@@ -43,13 +51,10 @@ export default function RoleGate({
           </svg>
         </div>
         <p className="font-display text-xl tracking-wide">NECESITÁS INICIAR SESIÓN</p>
-        <p className="text-sm text-tg-text-dim max-w-xs">
+        <p className={`text-sm ${dim} max-w-xs`}>
           {seccion ? `${seccion}: iniciá sesión para continuar.` : "Iniciá sesión para continuar."}
         </p>
-        <Link
-          href="/ingresar"
-          className="mt-2 rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm px-6 py-2.5"
-        >
+        <Link href="/ingresar" className={`mt-2 rounded-lg ${accentBg} font-semibold uppercase tracking-wide text-sm px-6 py-2.5`}>
           Ingresar
         </Link>
       </motion.div>
@@ -66,7 +71,7 @@ export default function RoleGate({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center text-center gap-3 rounded-2xl border border-tg-border bg-tg-surface p-8 mt-6"
+        className={`flex flex-col items-center text-center gap-3 rounded-2xl border ${border} ${surface} p-8 mt-6`}
       >
         <div className="w-12 h-12 rounded-full bg-tg-magenta/15 border border-tg-magenta/40 flex items-center justify-center">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-tg-magenta">
@@ -75,10 +80,10 @@ export default function RoleGate({
           </svg>
         </div>
         <p className="font-display text-xl tracking-wide">ACCESO RESTRINGIDO</p>
-        <p className="text-sm text-tg-text-dim max-w-xs">
+        <p className={`text-sm ${dim} max-w-xs`}>
           {seccion ? `${seccion}: tu cuenta no tiene permiso acá.` : "Tu cuenta no tiene permiso acá."}
         </p>
-        <Link href="/" className="mt-2 text-xs uppercase tracking-widest text-tg-green hover:underline">
+        <Link href="/" className={`mt-2 text-xs uppercase tracking-widest ${accentText} hover:underline`}>
           Volver al inicio
         </Link>
       </motion.div>

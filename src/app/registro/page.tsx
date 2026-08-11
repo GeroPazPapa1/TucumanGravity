@@ -58,12 +58,12 @@ export default function RegistroPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center text-center gap-3 py-16"
       >
-        <p className="font-display text-2xl tracking-wide">REVISÁ TU EMAIL</p>
-        <p className="text-sm text-tg-text-dim max-w-xs">
-          Te mandamos un link de confirmación a <strong className="text-tg-text">{email}</strong>. Tocalo para
+        <p className="font-display text-2xl tracking-wide text-plat-text">REVISÁ TU EMAIL</p>
+        <p className="text-sm text-plat-text-dim max-w-xs">
+          Te mandamos un link de confirmación a <strong className="text-plat-text">{email}</strong>. Tocalo para
           activar tu cuenta y ya podés entrar.
         </p>
-        <Link href="/ingresar" className="mt-2 text-tg-green text-xs uppercase tracking-widest">
+        <Link href="/ingresar" className="mt-2 text-plat-celeste text-xs uppercase tracking-widest">
           Ir a iniciar sesión
         </Link>
       </motion.div>
@@ -73,8 +73,8 @@ export default function RegistroPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">CREAR CUENTA</h1>
-        <p className="text-tg-text-dim text-sm">Sumate a Downhill App con tu perfil de corredor.</p>
+        <h1 className="font-display text-2xl tracking-wide text-plat-text">CREAR CUENTA</h1>
+        <p className="text-plat-text-dim text-sm">Sumate a Downhill App con tu perfil de corredor.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -83,7 +83,7 @@ export default function RegistroPage() {
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             required
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
             placeholder="Tu nombre y apellido"
           />
         </Campo>
@@ -94,7 +94,7 @@ export default function RegistroPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
             placeholder="vos@ejemplo.com"
           />
         </Campo>
@@ -106,7 +106,7 @@ export default function RegistroPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
             placeholder="Al menos 6 caracteres"
           />
         </Campo>
@@ -117,7 +117,7 @@ export default function RegistroPage() {
             value={confirmar}
             onChange={(e) => setConfirmar(e.target.value)}
             required
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
           />
         </Campo>
 
@@ -126,15 +126,15 @@ export default function RegistroPage() {
         <button
           type="submit"
           disabled={enviando}
-          className="mt-1 rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="mt-1 rounded-lg bg-plat-celeste text-white font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           {enviando ? "Creando cuenta…" : "Crear cuenta"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-tg-text-dim">
+      <p className="text-center text-sm text-plat-text-dim">
         ¿Ya tenés cuenta?{" "}
-        <Link href="/ingresar" className="text-tg-green">
+        <Link href="/ingresar" className="text-plat-celeste font-semibold">
           Iniciá sesión
         </Link>
       </p>
@@ -145,7 +145,7 @@ export default function RegistroPage() {
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">{label}</span>
+      <span className="block text-[11px] uppercase tracking-widest text-plat-text-dim mb-1.5">{label}</span>
       {children}
     </label>
   );

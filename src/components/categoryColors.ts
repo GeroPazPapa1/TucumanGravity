@@ -5,8 +5,9 @@ const accents = {
   "ebike-elite": { text: "text-tg-amber", bg: "bg-tg-amber/15", border: "border-tg-amber/40" },
 } as const;
 
-const defaultAccent = { text: "text-tg-text-dim", bg: "bg-tg-surface", border: "border-tg-border" };
+const defaultAccentOscuro = { text: "text-tg-text-dim", bg: "bg-tg-surface", border: "border-tg-border" };
+const defaultAccentClaro = { text: "text-plat-text-dim", bg: "bg-plat-surface-alt", border: "border-plat-border" };
 
-export function getCategoryAccent(categoriaId: string) {
-  return accents[categoriaId as keyof typeof accents] ?? defaultAccent;
+export function getCategoryAccent(categoriaId: string, claro = false) {
+  return accents[categoriaId as keyof typeof accents] ?? (claro ? defaultAccentClaro : defaultAccentOscuro);
 }

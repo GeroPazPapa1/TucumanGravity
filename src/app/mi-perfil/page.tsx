@@ -112,14 +112,14 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">MI PERFIL</h1>
-        <p className="text-tg-text-dim text-sm">Tu identidad en todos los torneos. Un solo perfil, para siempre.</p>
+        <h1 className="font-display text-2xl tracking-wide text-plat-text">MI PERFIL</h1>
+        <p className="text-plat-text-dim text-sm">Tu identidad en todos los torneos. Un solo perfil, para siempre.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-3">
           <RiderAvatar nombre={form.nombre} fotoUrl={form.foto_url} categoriaId="" size={112} />
-          <label className="text-xs uppercase tracking-widest text-tg-green cursor-pointer">
+          <label className="text-xs uppercase tracking-widest text-plat-celeste cursor-pointer">
             {subiendoFoto ? "Subiendo…" : "Cambiar foto"}
             <input type="file" accept="image/*" onChange={handleFoto} className="hidden" disabled={subiendoFoto} />
           </label>
@@ -129,7 +129,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
           <input
             value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface text-plat-text px-3 py-2.5 text-sm"
             required
           />
         </Campo>
@@ -138,7 +138,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
           <input
             value={form.bici ?? ""}
             onChange={(e) => setForm({ ...form, bici: e.target.value })}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface text-plat-text px-3 py-2.5 text-sm"
             placeholder="Ej: Commencal Supreme DH"
           />
         </Campo>
@@ -147,21 +147,21 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
           <input
             value={form.equipo ?? ""}
             onChange={(e) => setForm({ ...form, equipo: e.target.value })}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className="w-full rounded-lg border border-plat-border bg-plat-surface text-plat-text px-3 py-2.5 text-sm"
             placeholder="Ej: Pachamama Racing"
           />
         </Campo>
 
-        <label className="flex items-start gap-3 rounded-lg border border-tg-border bg-tg-surface px-3 py-3">
+        <label className="flex items-start gap-3 rounded-lg border border-plat-border bg-plat-surface px-3 py-3">
           <input
             type="checkbox"
             checked={form.federado}
             onChange={(e) => setForm({ ...form, federado: e.target.checked })}
-            className="accent-tg-green w-4 h-4 mt-0.5 shrink-0"
+            className="accent-plat-celeste w-4 h-4 mt-0.5 shrink-0"
           />
-          <span className="text-sm">
+          <span className="text-sm text-plat-text">
             <span className="block font-semibold">Estoy federado (licencia FACiMo vigente)</span>
-            <span className="block text-xs text-tg-text-dim mt-0.5">
+            <span className="block text-xs text-plat-text-dim mt-0.5">
               Dato autodeclarado — algunos torneos, como la Copa Argentina, solo suman puntos oficiales a
               corredores federados.
             </span>
@@ -173,7 +173,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
         <button
           type="submit"
           disabled={guardando || subiendoFoto}
-          className="mt-2 rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="mt-2 rounded-lg bg-plat-celeste text-white font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           {guardando ? "Guardando…" : "Guardar cambios"}
         </button>
@@ -184,7 +184,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-center text-sm text-tg-green"
+              className="text-center text-sm text-plat-celeste"
             >
               ✓ Perfil actualizado
             </motion.p>
@@ -194,23 +194,23 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
 
       {misTorneos.length > 0 && (
         <div>
-          <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Corrés en</p>
+          <p className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Corrés en</p>
           <div className="flex flex-col gap-2">
             {misTorneos.map((t) => (
               <Link
                 key={t.torneoId}
                 href={`/t/${t.torneoId}`}
-                className="flex items-center justify-between rounded-lg border border-tg-border bg-tg-surface px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-plat-border bg-plat-surface px-4 py-3"
               >
-                <span className="font-semibold text-sm">{t.torneoNombre}</span>
-                <span className="text-xs text-tg-text-dim">{t.categoriaNombre ?? "sin categoría"}</span>
+                <span className="font-semibold text-sm text-plat-text">{t.torneoNombre}</span>
+                <span className="text-xs text-plat-text-dim">{t.categoriaNombre ?? "sin categoría"}</span>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      <Link href="/" className="text-center text-xs uppercase tracking-widest text-tg-green">
+      <Link href="/" className="text-center text-xs uppercase tracking-widest text-plat-celeste">
         Ver todos los torneos →
       </Link>
     </div>
@@ -220,7 +220,7 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">{label}</span>
+      <span className="block text-[11px] uppercase tracking-widest text-plat-text-dim mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -229,8 +229,8 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
 function MiPerfilGated() {
   const { perfil, cargando } = useAuth();
 
-  if (cargando) return <div className="py-16 text-center text-sm text-tg-text-dim">Cargando…</div>;
-  if (!perfil) return <div className="py-16 text-center text-sm text-tg-text-dim">No se encontró tu perfil.</div>;
+  if (cargando) return <div className="py-16 text-center text-sm text-plat-text-dim">Cargando…</div>;
+  if (!perfil) return <div className="py-16 text-center text-sm text-plat-text-dim">No se encontró tu perfil.</div>;
 
   return <MiPerfilForm key={perfil.id} perfilInicial={perfil} />;
 }
