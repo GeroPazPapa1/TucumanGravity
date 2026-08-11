@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CarreraDetail from "@/components/CarreraDetail";
+import type { GrupoCategoria } from "@/components/ResultadosPorFecha";
 
 interface CarreraPageProps {
   params: Promise<{ torneo: string; id: string }>;
@@ -26,5 +27,41 @@ export default async function CarreraDetailPage({ params }: CarreraPageProps) {
 
   if (!carrera) notFound();
 
-  return <CarreraDetail carrera={carrera} torneoId={torneoId} />;
+  const { data: resultados } = await supabase
+    .from("resultados")
+    .select("corredor_id, categoria_id, posicion, puntos")
+    .eq("carrera_id", id)
+    .order("posicion");
+
+  let grupos: GrupoCategoria[] = [];
+
+  if (resultados && resultados.length > 0) {
+    const corredorIds = [...new Set(resultados.map((r) => r.corredor_id))];
+    const categoriaIds = [...new Set(resultados.map((r) => r.categoria_id))];
+
+    const [{ data: perfiles }, { data: categorias }] = await Promise.all([
+      supabase.from("perfiles").select("id, nombre").in("id", corredorIds),
+      supabase.from("categorias").select("id, nombre, orden").in("id", categoriaIds),
+    ]);
+
+    const categoriasOrdenadas = (categorias ?? []).slice().sort((a, b) => a.orden - b.orden);
+
+    grupos = categoriasOrdenadas
+      .map((cat) => ({
+        categoriaId: cat.id,
+        categoriaNombre: cat.nombre,
+        filas: resultados
+          .filter((r) => r.categoria_id === cat.id)
+          .map((r) => ({
+            corredorId: r.corredor_id,
+            nombre: perfiles?.find((p) => p.id === r.corredor_id)?.nombre ?? "Corredor",
+            posicion: r.posicion,
+            puntos: r.puntos,
+          }))
+          .sort((a, b) => a.posicion - b.posicion),
+      }))
+      .filter((g) => g.filas.length > 0);
+  }
+
+  return <CarreraDetail carrera={carrera} torneoId={torneoId} grupos={grupos} />;
 }

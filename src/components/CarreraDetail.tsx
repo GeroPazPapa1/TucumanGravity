@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { EstadoCarrera } from "@/lib/supabase/types";
+import ResultadosPorFecha, { type GrupoCategoria } from "@/components/ResultadosPorFecha";
 
 interface Carrera {
   id: string;
@@ -14,7 +15,15 @@ interface Carrera {
   estado: EstadoCarrera;
 }
 
-export default function CarreraDetail({ carrera, torneoId }: { carrera: Carrera; torneoId: string }) {
+export default function CarreraDetail({
+  carrera,
+  torneoId,
+  grupos,
+}: {
+  carrera: Carrera;
+  torneoId: string;
+  grupos: GrupoCategoria[];
+}) {
   const mapaEmbedSrc = `https://www.google.com/maps?q=${carrera.lat},${carrera.lng}&z=14&output=embed`;
   const comoLlegarHref = `https://www.google.com/maps/search/?api=1&query=${carrera.lat},${carrera.lng}`;
 
@@ -52,11 +61,15 @@ export default function CarreraDetail({ carrera, torneoId }: { carrera: Carrera;
         Cómo llegar en Google Maps
       </a>
 
-      <div className="rounded-lg border border-tg-border bg-tg-surface p-4 text-sm text-tg-text-dim">
-        {carrera.estado === "disputada"
-          ? "Resultados individuales de esta fecha: próximamente. Por ahora, el acumulado general ya refleja el impacto de esta carrera."
-          : "Todavía no se corrió esta fecha. Cuando se dispute, el organizador va a cargar los resultados y el ranking se actualiza solo."}
-      </div>
+      {grupos.length > 0 ? (
+        <ResultadosPorFecha grupos={grupos} />
+      ) : (
+        <div className="rounded-lg border border-tg-border bg-tg-surface p-4 text-sm text-tg-text-dim">
+          {carrera.estado === "disputada"
+            ? "El organizador todavía no cargó el detalle por corredor de esta fecha. El acumulado general ya refleja su impacto igual."
+            : "Todavía no se corrió esta fecha. Cuando se dispute, el organizador va a cargar los resultados y el ranking se actualiza solo."}
+        </div>
+      )}
     </motion.div>
   );
 }
