@@ -4,35 +4,46 @@ import { createClient } from "@/lib/supabase/server";
 import CorredorPerfil from "@/components/CorredorPerfil";
 
 interface CorredorPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ torneo: string; id: string }>;
 }
 
 export async function generateMetadata({ params }: CorredorPageProps): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
   const { data: corredor } = await supabase.from("perfiles").select("nombre").eq("id", id).single();
-  return { title: corredor ? `${corredor.nombre} · Tucumán Gravity` : "Corredor · Tucumán Gravity" };
+  return { title: corredor ? corredor.nombre : "Corredor" };
 }
 
 export default async function CorredorPage({ params }: CorredorPageProps) {
-  const { id } = await params;
+  const { torneo: torneoId, id } = await params;
   const supabase = await createClient();
 
-  const { data: corredor } = await supabase.from("perfiles").select("*").eq("id", id).single();
-  if (!corredor) notFound();
+  const [{ data: torneo }, { data: corredor }, { data: inscripcion }] = await Promise.all([
+    supabase.from("torneos").select("id, nombre").eq("id", torneoId).single(),
+    supabase.from("perfiles").select("*").eq("id", id).single(),
+    supabase
+      .from("torneo_inscripciones")
+      .select("*")
+      .eq("torneo_id", torneoId)
+      .eq("perfil_id", id)
+      .maybeSingle(),
+  ]);
 
-  const { data: categoria } = corredor.categoria_id
-    ? await supabase.from("categorias").select("*").eq("id", corredor.categoria_id).single()
+  if (!torneo || !corredor) notFound();
+
+  const { data: categoria } = inscripcion?.categoria_id
+    ? await supabase.from("categorias").select("*").eq("id", inscripcion.categoria_id).single()
     : { data: null };
 
   let posicion: number | null = null;
   let totalPuntos: number | null = null;
 
-  if (corredor.categoria_id) {
+  if (inscripcion?.categoria_id) {
     const { data: ranking } = await supabase
       .from("ranking_general")
       .select("corredor_id, total_puntos")
-      .eq("categoria_id", corredor.categoria_id)
+      .eq("torneo_id", torneoId)
+      .eq("categoria_id", inscripcion.categoria_id)
       .order("total_puntos", { ascending: false });
 
     const index = (ranking ?? []).findIndex((r) => r.corredor_id === corredor.id);
@@ -44,8 +55,15 @@ export default async function CorredorPage({ params }: CorredorPageProps) {
 
   return (
     <CorredorPerfil
-      corredor={corredor}
+      torneoId={torneoId}
+      torneoNombre={torneo.nombre}
+      nombre={corredor.nombre}
+      fotoUrl={corredor.foto_url}
+      bici={corredor.bici}
+      equipo={corredor.equipo}
+      numero={inscripcion?.numero ?? null}
       categoriaNombre={categoria?.nombre ?? null}
+      categoriaSlug={categoria?.slug ?? null}
       posicion={posicion}
       totalPuntos={totalPuntos}
     />

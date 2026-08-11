@@ -11,21 +11,32 @@ import type { Rol } from "@/lib/supabase/types";
 
 const nombreRol: Record<Rol, string> = {
   corredor: "Corredor",
-  organizador: "Organizador",
   superadmin: "Super admin",
 };
 
 export default function AccountMenu() {
   const router = useRouter();
-  const { user, perfil, rol, cargando } = useAuth();
+  const { user, perfil, rol, cargando, torneosOrganizados } = useAuth();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
+  const [torneosNombres, setTorneosNombres] = useState<{ id: string; nombre: string }[]>([]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- portal solo puede montarse en cliente (evita mismatch de hidratación)
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!open || torneosOrganizados.length === 0) return;
+    const supabase = createClient();
+    supabase
+      .from("torneos")
+      .select("id, nombre")
+      .in("id", torneosOrganizados)
+      .then(({ data }) => setTorneosNombres(data ?? []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   async function cerrarSesion() {
     setSaliendo(true);
@@ -68,7 +79,7 @@ export default function AccountMenu() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-tg-border bg-tg-surface p-5 pb-8 max-w-3xl mx-auto"
+            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-tg-border bg-tg-surface p-5 pb-8 max-w-3xl mx-auto max-h-[85vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -90,21 +101,38 @@ export default function AccountMenu() {
 
             <div className="flex flex-col gap-2">
               <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="rounded-lg border border-tg-border bg-tg-bg px-4 py-3 text-sm font-semibold"
+              >
+                Ver todos los torneos
+              </Link>
+              <Link
                 href="/mi-perfil"
                 onClick={() => setOpen(false)}
                 className="rounded-lg border border-tg-border bg-tg-bg px-4 py-3 text-sm font-semibold"
               >
                 Mi perfil
               </Link>
-              {(rol === "organizador" || rol === "superadmin") && (
-                <Link
-                  href="/organizador"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg border border-tg-border bg-tg-bg px-4 py-3 text-sm font-semibold"
-                >
-                  Panel del organizador
-                </Link>
+
+              {torneosOrganizados.length > 0 && (
+                <>
+                  <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mt-2">Organizás</p>
+                  {(torneosNombres.length ? torneosNombres : torneosOrganizados.map((id) => ({ id, nombre: id }))).map(
+                    (t) => (
+                      <Link
+                        key={t.id}
+                        href={`/t/${t.id}/organizador`}
+                        onClick={() => setOpen(false)}
+                        className="rounded-lg border border-tg-border bg-tg-bg px-4 py-3 text-sm font-semibold"
+                      >
+                        Panel de {t.nombre}
+                      </Link>
+                    )
+                  )}
+                </>
               )}
+
               {rol === "superadmin" && (
                 <Link
                   href="/admin"

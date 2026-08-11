@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
-const items: { href: string; label: string; icon: ReactNode }[] = [
+const tabs: { slug: string; label: string; icon: ReactNode }[] = [
   {
-    href: "/corredores",
+    slug: "corredores",
     label: "Corredores",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
@@ -19,7 +19,7 @@ const items: { href: string; label: string; icon: ReactNode }[] = [
     ),
   },
   {
-    href: "/ranking",
+    slug: "ranking",
     label: "Ranking",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
@@ -31,7 +31,7 @@ const items: { href: string; label: string; icon: ReactNode }[] = [
     ),
   },
   {
-    href: "/carreras",
+    slug: "carreras",
     label: "Carreras",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
@@ -45,15 +45,21 @@ const items: { href: string; label: string; icon: ReactNode }[] = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  const match = pathname?.match(/^\/t\/([^/]+)/);
+  const torneoId = match?.[1];
+
+  if (!torneoId) return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-tg-border bg-tg-bg/95 backdrop-blur">
       <div className="w-full max-w-3xl mx-auto grid grid-cols-3">
-        {items.map((item) => {
-          const active = pathname?.startsWith(item.href);
+        {tabs.map((tab) => {
+          const href = `/t/${torneoId}/${tab.slug}`;
+          const active = pathname?.startsWith(href);
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={tab.slug}
+              href={href}
               className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
                 active ? "text-tg-green" : "text-tg-text-dim hover:text-tg-text"
               }`}
@@ -65,8 +71,8 @@ export default function BottomNav() {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              {item.icon}
-              {item.label}
+              {tab.icon}
+              {tab.label}
             </Link>
           );
         })}

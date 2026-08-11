@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PageTransition from "@/components/PageTransition";
 import { AuthProvider } from "@/components/AuthProvider";
+import OnboardingGate from "@/components/OnboardingGate";
 import "./globals.css";
 
 const anton = Anton({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-tg-bg text-tg-text font-sans">
         <AuthProvider>
+          <OnboardingGate />
           <Header />
           <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-28 pt-4">
             <PageTransition>{children}</PageTransition>

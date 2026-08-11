@@ -14,13 +14,13 @@ interface Carrera {
   estado: EstadoCarrera;
 }
 
-export default function CarreraDetail({ carrera }: { carrera: Carrera }) {
+export default function CarreraDetail({ carrera, torneoId }: { carrera: Carrera; torneoId: string }) {
   const mapaEmbedSrc = `https://www.google.com/maps?q=${carrera.lat},${carrera.lng}&z=14&output=embed`;
   const comoLlegarHref = `https://www.google.com/maps/search/?api=1&query=${carrera.lat},${carrera.lng}`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
-      <Link href="/carreras" className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
+      <Link href={`/t/${torneoId}/carreras`} className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
         ← Todas las carreras
       </Link>
 

@@ -1,28 +1,15 @@
-# Tucumán Gravity
+# Plataforma de torneos de descenso (ex Tucumán Gravity)
 
-App oficial no-oficial del torneo de descenso (downhill MTB) de Tucumán.
-Organiza **Pachamama Bike Shop**. Sponsors: **Radoc** y **Commencal**.
+App multi-torneo de descenso (downhill MTB). Una sola cuenta, un solo
+login, y desde ahí elegís entre varios torneos — cada uno con su propio
+ranking, sus propias fechas y su propio organizador, sin mezclarse entre
+sí.
 
-> Estado actual: **v3 — backend real conectado.** Login con email y
-> contraseña, tres roles reales (corredor / organizador / super admin)
-> aplicados con seguridad a nivel de base de datos, datos persistentes en
-> Supabase. Falta un solo paso manual tuyo: correr el SQL (ver abajo).
-
-## Paso obligatorio antes de usarla: correr el SQL en Supabase
-
-La app ya está conectada a tu proyecto de Supabase, pero las tablas
-todavía no existen ahí — hay que crearlas una sola vez.
-
-1. Entrá a tu proyecto en [supabase.com](https://supabase.com) → **SQL Editor** → **New query**.
-2. Pegá **todo** el contenido de [`supabase/schema.sql`](supabase/schema.sql) y tocá **Run**.
-3. Repetí el paso 2 con [`supabase/seed.sql`](supabase/seed.sql) (carga las 4 categorías, las 4 carreras y el ranking real de los 20 corredores como "histórico sin vincular").
-4. Registrate normalmente en la app (`/registro`) con tu email real.
-5. Confirmá tu cuenta desde el mail que te llega.
-6. Volvé al SQL Editor y corré [`supabase/promover_superadmin.sql`](supabase/promover_superadmin.sql) (ya tiene tu email precargado: `ing.pazgeronimo@gmail.com` — cambialo ahí si te registraste con otro). Esto te convierte en super admin.
-
-Después de eso, listo: vos entrás como super admin, y desde tu panel de
-admin le podés dar el rol de organizador a la cuenta del dueño del
-torneo cuando se registre.
+> Estado actual: **v4 — estructura multi-torneo real.** Ocho torneos
+> conviven en la misma plataforma: los 4 regionales (Tucumán Gravity,
+> Córdoba, Mendoza, Patagonia), la Copa Argentina, el Open Shimano, el
+> Latam y el Campeonato Argentino. Todos los datos y la seguridad de
+> Tucumán Gravity que ya tenías cargados se migraron sin perder nada.
 
 ## Cómo correr la app en tu máquina
 
@@ -33,75 +20,86 @@ npm run dev
 ```
 
 Abrí [http://localhost:3000](http://localhost:3000). Las variables de
-entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) ya
-están en `.env.local` — no hace falta tocarlas para desarrollo local.
+entorno ya están en `.env.local`.
 
-## Cómo funcionan los roles (de verdad, no una demo)
+## Estructura de torneos
 
-- Te registrás → por defecto sos **corredor**, con tu propio perfil.
-- **Nadie se autoasigna** organizador ni super admin: eso lo controla la
-  base de datos con reglas de seguridad (Row Level Security), no el
-  frontend. Aunque alguien mande pedidos directos a la API, no puede
-  cambiarse el rol ni inflar sus propios puntos — hay un trigger en
-  Postgres que lo bloquea siempre, sin excepción.
-- El super admin asigna el rol de **organizador** a la cuenta del dueño
-  del torneo desde `/admin`, una vez que esa persona se registra.
-- Cada panel (`/mi-perfil`, `/organizador`, `/admin`) chequea el rol real
-  de la sesión antes de mostrar nada. Si no corresponde, muestra un
-  aviso en vez del contenido.
+- **`/`** — selector de torneos (nueva portada).
+- **`/t/[torneo]`** — portada de un torneo puntual (ej: `/t/tucuman-gravity`).
+- **`/t/[torneo]/ranking`**, **`/carreras`**, **`/corredores`** — igual que antes, pero encerrados dentro de su torneo.
+- **`/t/[torneo]/organizador`** — panel del organizador de ESE torneo. Ahora carga resultados, fechas **y categorías** (los torneos nuevos arrancan sin categorías cargadas, el organizador las crea).
+- **`/mi-perfil`** — sigue siendo global: tu identidad (nombre, foto, bici, equipo, DNI, fecha de nacimiento) es una sola, para todos los torneos.
+- **`/admin`** — ahora gestiona todos los torneos: activar/desactivar, asignar o quitar organizadores por torneo, vincular ranking histórico por torneo.
+
+## Cómo funcionan los roles ahora
+
+- El rol **organizador ya no es global** — es por torneo. Alguien puede
+  organizar Copa Argentina sin poder tocar nada de Tucumán Gravity, y
+  viceversa. Lo controla la tabla `torneo_miembros` + seguridad (RLS) en
+  la base de datos, no el frontend.
+- El **super admin** (vos) sigue siendo global: ve y gestiona todos los
+  torneos desde `/admin`.
+- Un **corredor** se registra una sola vez y después se **inscribe** en
+  cada torneo donde compite, eligiendo su categoría en ese torneo
+  puntual (un cartel se lo pide automáticamente la primera vez que entra
+  a un torneo nuevo). Puede correr en categorías distintas en cada
+  torneo.
+
+## DNI y fecha de nacimiento obligatorios
+
+Después de registrarte (con Google o con email), la app te pide
+completar tu **DNI y fecha de nacimiento** antes de dejarte usar el
+resto — no se puede saltear. Esto evita cuentas duplicadas de la misma
+persona (el DNI es único en la base) y deja la fecha de nacimiento lista
+para cuando armemos el motor de categorías UCI (Fase 2).
 
 ## Sobre el ranking real que ya tenías cargado
 
-Los 20 corredores del acumulado real (Alejandro Ruiz Campo, Santiago De
-Santiago, etc.) están cargados en `corredores_precarga` — visibles en el
-ranking con la etiqueta "sin registrar" hasta que cada uno cree su
-cuenta. Cuando alguien se registre y complete su categoría, vos o el
-organizador lo vinculan desde `/admin` (sección "Ranking histórico sin
-vincular"): ahí sus puntos pasan a su cuenta real y deja de aparecer
-como precarga.
-
-**Limitación real de esta etapa:** el organizador solo puede cargar
-resultados de fechas nuevas para corredores que **ya tienen cuenta
-creada**. Si alguien de los 20 históricos corre la fecha 4 antes de
-registrarse, ese resultado puntual hay que cargarlo una vez que esa
-persona se registre (su acumulado sigue siendo correcto igual, solo se
-demora la carga del detalle fecha por fecha).
+Los 20 corredores del ranking real de Tucumán Gravity siguen intactos,
+ahora en `corredores_precarga` filtrados por `torneo_id = 'tucuman-gravity'`.
+Se vinculan igual que antes, desde `/admin` → elegís el torneo → "Ranking
+histórico sin vincular".
 
 ## Estructura del proyecto
 
 ```
 supabase/
-  schema.sql              tablas, roles, seguridad (RLS), triggers, vista de ranking, storage
-  seed.sql                categorías, carreras y ranking real de arranque
-  promover_superadmin.sql corré esto una vez, después de registrarte vos
+  schema.sql                 esquema original (auth, roles globales, RLS)
+  seed.sql                   datos reales de arranque de Tucumán Gravity
+  migration_002_multi_torneo.sql   pasa la app a multi-torneo (torneos, categorías por
+                              torneo, inscripciones, roles por torneo)
+  fix_trigger_perfil.sql, promover_superadmin.sql   scripts puntuales ya usados
 
-src/lib/supabase/
-  client.ts    cliente para componentes de cliente (navegador)
-  server.ts    cliente para componentes de servidor
-  middleware.ts + src/proxy.ts   mantienen la sesión viva en cada request
-  types.ts     tipos de la base de datos
+src/app/
+  page.tsx                   selector de torneos
+  t/[torneo]/                todo lo que vive adentro de un torneo puntual
+  mi-perfil/, completar-perfil/, admin/, registro/, ingresar/   globales
 
-src/components/AuthProvider.tsx   sesión real + perfil + rol, disponible en toda la app
-src/components/RoleGate.tsx       bloquea contenido según el rol real de la sesión
-src/components/AccountMenu.tsx    menú de cuenta (perfil, paneles, cerrar sesión)
+src/components/
+  AuthProvider.tsx           sesión + perfil + en qué torneos sos organizador
+  OnboardingGate.tsx          fuerza completar DNI/fecha de nacimiento tras el primer login
+  RoleGate.tsx                bloquea contenido: sesión / organizador de un torneo / superadmin
+  InscripcionWidget.tsx       le pide al corredor su categoría la primera vez que entra a un torneo
 ```
-
-Las páginas públicas (portada, ranking, carreras, corredores) se
-renderizan en el servidor consultando Supabase directamente — no
-dependen de que el usuario esté logueado. Los paneles interactivos (mi
-perfil, organizador, admin) corren en el cliente, autenticados con la
-sesión real.
 
 ## Logo
 
-Se usa el archivo oficial (`public/brand/logo-tucuman-gravity.png`), sin
-fondo, apoyado sobre una placa clara en `src/components/Logo.tsx` para
-que se lea bien en la UI oscura — el arte no fue modificado.
+Se usa el archivo oficial (`public/brand/logo-tucuman-gravity.png`) en
+el header de toda la plataforma por ahora — todavía no hay identidad
+visual propia por torneo. Eso es a propósito: primero la estructura y la
+funcionalidad, después el diseño por torneo (logos, colores) cuando los
+tengas listos.
 
 ## Próximos pasos
 
-1. Correr el SQL (ver arriba) y probar el registro/login real de punta a punta.
-2. Invitar al dueño del torneo a registrarse y asignarle el rol de organizador.
-3. Ir sumando corredores reales y vinculando su histórico desde `/admin`.
-4. Sumar login con Google (Supabase ya lo soporta; falta crear las credenciales en Google Cloud Console cuando quieras dar ese paso).
-5. Preparar la publicación (Vercel) — variables de entorno iguales a las de `.env.local`.
+1. **Vos:** probar con tu cuenta real los flujos que necesitan login —
+   inscribirte a un torneo, el panel del organizador, el panel de admin
+   (asignar organizadores, activar/desactivar torneos). No pude probar
+   estos con tu contraseña real, así que son los que más conviene que
+   revises vos.
+2. Motor de categorías UCI automático (recalcular categoría por edad).
+3. Importador de Excel para corredores y rankings regionales externos.
+4. Motor de puntos de Copa Argentina (descarte, presentismo, fecha regional).
+5. Resultados en vivo + integración visual de Cronometraje Instantáneo.
+6. Login con Google (falta crear las credenciales en Google Cloud Console).
+7. Identidad visual y logo propios por torneo.

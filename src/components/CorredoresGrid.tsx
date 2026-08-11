@@ -15,11 +15,14 @@ interface Categoria {
 interface Corredor {
   id: string;
   nombre: string;
-  categoria_id: string | null;
-  foto_url: string | null;
+  categoriaId: string | null;
+  categoriaNombre: string | null;
+  categoriaSlug: string | null;
+  fotoUrl: string | null;
 }
 
 interface CorredoresGridProps {
+  torneoId: string;
   categorias: Categoria[];
   filtroActivo: string;
   corredores: Corredor[];
@@ -35,13 +38,13 @@ const itemVariants = {
   show: { opacity: 1, y: 0, scale: 1 },
 };
 
-export default function CorredoresGrid({ categorias, filtroActivo, corredores }: CorredoresGridProps) {
+export default function CorredoresGrid({ torneoId, categorias, filtroActivo, corredores }: CorredoresGridProps) {
   return (
     <>
       <CategoryTabs
         categorias={categorias}
         activa={filtroActivo}
-        basePath="/corredores"
+        basePath={`/t/${torneoId}/corredores`}
         extra={{ id: "todos", nombre: "Todos" }}
       />
 
@@ -52,18 +55,17 @@ export default function CorredoresGrid({ categorias, filtroActivo, corredores }:
       ) : (
         <motion.ul initial="hidden" animate="show" variants={listVariants} className="grid grid-cols-2 gap-3">
           {corredores.map((corredor) => {
-            const categoria = categorias.find((c) => c.id === corredor.categoria_id);
-            const accent = getCategoryAccent(corredor.categoria_id ?? "");
+            const accent = getCategoryAccent(corredor.categoriaSlug ?? "");
             return (
               <motion.li key={corredor.id} variants={itemVariants}>
                 <Link
-                  href={`/corredores/${corredor.id}`}
+                  href={`/t/${torneoId}/corredores/${corredor.id}`}
                   className="flex flex-col items-center gap-2 rounded-xl border border-tg-border bg-tg-surface p-4 text-center transition-all hover:border-tg-green/50 hover:-translate-y-0.5 h-full"
                 >
-                  <RiderAvatar nombre={corredor.nombre} fotoUrl={corredor.foto_url} categoriaId={corredor.categoria_id ?? ""} size={64} />
+                  <RiderAvatar nombre={corredor.nombre} fotoUrl={corredor.fotoUrl} categoriaId={corredor.categoriaSlug ?? ""} size={64} />
                   <p className="font-semibold text-sm leading-tight">{corredor.nombre}</p>
                   <span className={`text-[10px] uppercase tracking-widest font-semibold ${accent.text}`}>
-                    {categoria?.nombre}
+                    {corredor.categoriaNombre}
                   </span>
                 </Link>
               </motion.li>

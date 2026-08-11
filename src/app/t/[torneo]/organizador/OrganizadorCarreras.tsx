@@ -7,22 +7,34 @@ import type { Database } from "@/lib/supabase/types";
 
 type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
 
-export default function OrganizadorCarreras() {
+function slugify(texto: string) {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) {
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [cargando, setCargando] = useState(true);
   const [expandidaId, setExpandidaId] = useState<string | null>(null);
   const [form, setForm] = useState<Carrera | null>(null);
   const [guardadaId, setGuardadaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creando, setCreando] = useState(false);
+  const [nueva, setNueva] = useState({ nombre: "", lugar: "", lat: "", lng: "" });
 
   useEffect(() => {
     cargar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [torneoId]);
 
   async function cargar() {
     setCargando(true);
     const supabase = createClient();
-    const { data } = await supabase.from("carreras").select("*").order("numero");
+    const { data } = await supabase.from("carreras").select("*").eq("torneo_id", torneoId).order("numero");
     setCarreras(data ?? []);
     setCargando(false);
   }
@@ -68,10 +80,96 @@ export default function OrganizadorCarreras() {
     setForm({ ...form, estado: form.estado === "disputada" ? "proxima" : "disputada" });
   }
 
+  async function crearCarrera(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const lat = Number(nueva.lat);
+    const lng = Number(nueva.lng);
+    if (!nueva.nombre || !nueva.lugar || Number.isNaN(lat) || Number.isNaN(lng)) {
+      setError("Completá nombre, lugar, latitud y longitud.");
+      return;
+    }
+
+    const supabase = createClient();
+    const id = `${torneoId}-${slugify(nueva.nombre)}`;
+    const { error: insertError } = await supabase.from("carreras").insert({
+      id,
+      torneo_id: torneoId,
+      numero: carreras.length + 1,
+      nombre: nueva.nombre,
+      lugar: nueva.lugar,
+      lat,
+      lng,
+      estado: "proxima",
+    });
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+
+    setNueva({ nombre: "", lugar: "", lat: "", lng: "" });
+    setCreando(false);
+    await cargar();
+  }
+
   if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando carreras…</div>;
 
   return (
     <div className="flex flex-col gap-3">
+      <button
+        onClick={() => setCreando((v) => !v)}
+        className="rounded-lg border border-dashed border-tg-border text-tg-text-dim text-sm py-3"
+      >
+        {creando ? "Cancelar" : "+ Nueva fecha"}
+      </button>
+
+      <AnimatePresence>
+        {creando && (
+          <motion.form
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            onSubmit={crearCarrera}
+            className="flex flex-col gap-3 rounded-xl border border-tg-border bg-tg-surface p-4 overflow-hidden"
+          >
+            <input
+              value={nueva.nombre}
+              onChange={(e) => setNueva({ ...nueva, nombre: e.target.value })}
+              placeholder="Nombre del circuito"
+              className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+            />
+            <input
+              value={nueva.lugar}
+              onChange={(e) => setNueva({ ...nueva, lugar: e.target.value })}
+              placeholder="Lugar"
+              className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={nueva.lat}
+                onChange={(e) => setNueva({ ...nueva, lat: e.target.value })}
+                placeholder="Latitud"
+                inputMode="decimal"
+                className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+              />
+              <input
+                value={nueva.lng}
+                onChange={(e) => setNueva({ ...nueva, lng: e.target.value })}
+                placeholder="Longitud"
+                inputMode="decimal"
+                className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+              />
+            </div>
+            <button type="submit" className="rounded-lg bg-tg-green text-tg-bg font-semibold uppercase text-sm py-2.5">
+              Crear fecha
+            </button>
+          </motion.form>
+        )}
+      </AnimatePresence>
+
+      {error && <p className="text-sm text-tg-magenta">{error}</p>}
+
       {carreras.map((carrera) => {
         const expandida = expandidaId === carrera.id;
         const activo = expandida && form ? form : carrera;
@@ -155,8 +253,6 @@ export default function OrganizadorCarreras() {
                     <button type="button" onClick={alternarEstado} className="text-xs uppercase tracking-widest text-left text-tg-cyan">
                       {activo.estado === "disputada" ? "Marcar como próxima" : "Marcar como disputada"}
                     </button>
-
-                    {error && <p className="text-sm text-tg-magenta">{error}</p>}
 
                     <button
                       type="button"

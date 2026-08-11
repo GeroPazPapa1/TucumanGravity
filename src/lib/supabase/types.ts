@@ -1,22 +1,85 @@
-// Tipos de la base de datos, escritos a mano a partir de supabase/schema.sql.
-// Si el esquema cambia, actualizar acá (o regenerar con `supabase gen types`
-// una vez instalado el CLI de Supabase).
+// Tipos de la base de datos, escritos a mano a partir de supabase/schema.sql
+// + supabase/migration_002_multi_torneo.sql. Si el esquema cambia,
+// actualizar acá (o regenerar con `supabase gen types` una vez instalado
+// el CLI de Supabase).
 
-export type Rol = "corredor" | "organizador" | "superadmin";
+/** Rol global de la persona en toda la plataforma. */
+export type Rol = "corredor" | "superadmin";
+/** Rol dentro de un torneo puntual (independiente del rol global). */
+export type RolTorneo = "organizador";
+
 export type EstadoCarrera = "disputada" | "proxima";
+export type TipoTorneo = "regional" | "nacional" | "internacional";
+export type Genero = "masculino" | "femenino" | "mixto";
 
 export interface Database {
   public: {
     Tables: {
+      torneos: {
+        Row: {
+          id: string;
+          nombre: string;
+          tipo: TipoTorneo;
+          activo: boolean;
+          logo_url: string | null;
+          color_primario: string | null;
+          color_secundario: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          nombre: string;
+          tipo?: TipoTorneo;
+          activo?: boolean;
+          logo_url?: string | null;
+          color_primario?: string | null;
+          color_secundario?: string | null;
+        };
+        Update: Partial<{
+          nombre: string;
+          tipo: TipoTorneo;
+          activo: boolean;
+          logo_url: string | null;
+          color_primario: string | null;
+          color_secundario: string | null;
+        }>;
+        Relationships: [];
+      };
       categorias: {
-        Row: { id: string; nombre: string; orden: number };
-        Insert: { id: string; nombre: string; orden: number };
-        Update: Partial<{ id: string; nombre: string; orden: number }>;
+        Row: {
+          id: string;
+          torneo_id: string;
+          slug: string;
+          nombre: string;
+          orden: number;
+          edad_min: number | null;
+          edad_max: number | null;
+          genero: Genero | null;
+        };
+        Insert: {
+          id?: string;
+          torneo_id: string;
+          slug: string;
+          nombre: string;
+          orden: number;
+          edad_min?: number | null;
+          edad_max?: number | null;
+          genero?: Genero | null;
+        };
+        Update: Partial<{
+          slug: string;
+          nombre: string;
+          orden: number;
+          edad_min: number | null;
+          edad_max: number | null;
+          genero: Genero | null;
+        }>;
         Relationships: [];
       };
       carreras: {
         Row: {
           id: string;
+          torneo_id: string;
           numero: number;
           nombre: string;
           lugar: string;
@@ -26,6 +89,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          torneo_id: string;
           numero: number;
           nombre: string;
           lugar: string;
@@ -34,7 +98,6 @@ export interface Database {
           estado: EstadoCarrera;
         };
         Update: Partial<{
-          id: string;
           numero: number;
           nombre: string;
           lugar: string;
@@ -48,41 +111,81 @@ export interface Database {
         Row: {
           id: string;
           nombre: string;
-          numero: number | null;
-          categoria_id: string | null;
+          dni: string | null;
+          fecha_nacimiento: string | null;
           bici: string | null;
           equipo: string | null;
           foto_url: string | null;
-          puntos_iniciales: number;
           rol: Rol;
           created_at: string;
         };
         Insert: {
           id: string;
           nombre: string;
-          numero?: number | null;
-          categoria_id?: string | null;
+          dni?: string | null;
+          fecha_nacimiento?: string | null;
           bici?: string | null;
           equipo?: string | null;
           foto_url?: string | null;
-          puntos_iniciales?: number;
           rol?: Rol;
         };
         Update: Partial<{
           nombre: string;
-          numero: number | null;
-          categoria_id: string | null;
+          dni: string | null;
+          fecha_nacimiento: string | null;
           bici: string | null;
           equipo: string | null;
           foto_url: string | null;
-          puntos_iniciales: number;
           rol: Rol;
         }>;
+        Relationships: [];
+      };
+      torneo_inscripciones: {
+        Row: {
+          id: string;
+          torneo_id: string;
+          perfil_id: string;
+          categoria_id: string | null;
+          numero: number | null;
+          puntos_iniciales: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          torneo_id: string;
+          perfil_id: string;
+          categoria_id?: string | null;
+          numero?: number | null;
+          puntos_iniciales?: number;
+        };
+        Update: Partial<{
+          categoria_id: string | null;
+          numero: number | null;
+          puntos_iniciales: number;
+        }>;
+        Relationships: [];
+      };
+      torneo_miembros: {
+        Row: {
+          id: string;
+          torneo_id: string;
+          perfil_id: string;
+          rol: RolTorneo;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          torneo_id: string;
+          perfil_id: string;
+          rol?: RolTorneo;
+        };
+        Update: Partial<{ rol: RolTorneo }>;
         Relationships: [];
       };
       corredores_precarga: {
         Row: {
           id: string;
+          torneo_id: string;
           nombre: string;
           categoria_id: string;
           puntos_iniciales: number;
@@ -91,6 +194,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          torneo_id: string;
           nombre: string;
           categoria_id: string;
           puntos_iniciales?: number;
@@ -132,6 +236,7 @@ export interface Database {
     Views: {
       ranking_general: {
         Row: {
+          torneo_id: string;
           categoria_id: string;
           corredor_id: string;
           nombre: string;
@@ -153,6 +258,14 @@ export interface Database {
       };
       asignar_rol: {
         Args: { perfil_id_destino: string; nuevo_rol: Rol };
+        Returns: undefined;
+      };
+      asignar_organizador: {
+        Args: { p_torneo_id: string; p_perfil_id: string };
+        Returns: undefined;
+      };
+      quitar_organizador: {
+        Args: { p_torneo_id: string; p_perfil_id: string };
         Returns: undefined;
       };
     };

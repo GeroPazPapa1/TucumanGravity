@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import RoleGate from "@/components/RoleGate";
 import RiderAvatar from "@/components/RiderAvatar";
@@ -9,25 +10,48 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 type Perfil = Database["public"]["Tables"]["perfiles"]["Row"];
-type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
+
+interface MisTorneos {
+  torneoId: string;
+  torneoNombre: string;
+  categoriaNombre: string | null;
+}
 
 function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
   const { user, refrescarPerfil } = useAuth();
   const [form, setForm] = useState(perfilInicial);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [misTorneos, setMisTorneos] = useState<MisTorneos[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) return;
     const supabase = createClient();
     supabase
-      .from("categorias")
-      .select("*")
-      .order("orden")
-      .then(({ data }) => setCategorias(data ?? []));
-  }, []);
+      .from("torneo_inscripciones")
+      .select("torneo_id, categoria_id")
+      .eq("perfil_id", user.id)
+      .then(async ({ data: inscripciones }) => {
+        if (!inscripciones || inscripciones.length === 0) return;
+        const torneoIds = inscripciones.map((i) => i.torneo_id);
+        const categoriaIds = inscripciones.map((i) => i.categoria_id).filter((id): id is string => !!id);
+        const [{ data: torneos }, { data: categorias }] = await Promise.all([
+          supabase.from("torneos").select("id, nombre").in("id", torneoIds),
+          categoriaIds.length
+            ? supabase.from("categorias").select("id, nombre").in("id", categoriaIds)
+            : Promise.resolve({ data: [] }),
+        ]);
+        setMisTorneos(
+          inscripciones.map((i) => ({
+            torneoId: i.torneo_id,
+            torneoNombre: torneos?.find((t) => t.id === i.torneo_id)?.nombre ?? i.torneo_id,
+            categoriaNombre: categorias?.find((c) => c.id === i.categoria_id)?.nombre ?? null,
+          }))
+        );
+      });
+  }, [user]);
 
   async function handleFoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -66,8 +90,6 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
       .from("perfiles")
       .update({
         nombre: form.nombre,
-        numero: form.numero,
-        categoria_id: form.categoria_id,
         bici: form.bici,
         equipo: form.equipo,
         foto_url: form.foto_url,
@@ -90,12 +112,12 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="font-display text-2xl tracking-wide">MI PERFIL</h1>
-        <p className="text-tg-text-dim text-sm">Así te ven los demás corredores en Tucumán Gravity.</p>
+        <p className="text-tg-text-dim text-sm">Tu identidad en todos los torneos. Un solo perfil, para siempre.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-3">
-          <RiderAvatar nombre={form.nombre} fotoUrl={form.foto_url} categoriaId={form.categoria_id ?? ""} size={112} />
+          <RiderAvatar nombre={form.nombre} fotoUrl={form.foto_url} categoriaId="" size={112} />
           <label className="text-xs uppercase tracking-widest text-tg-green cursor-pointer">
             {subiendoFoto ? "Subiendo…" : "Cambiar foto"}
             <input type="file" accept="image/*" onChange={handleFoto} className="hidden" disabled={subiendoFoto} />
@@ -109,31 +131,6 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
             className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
             required
           />
-        </Campo>
-
-        <Campo label="Número de corredor">
-          <input
-            type="number"
-            value={form.numero ?? ""}
-            onChange={(e) => setForm({ ...form, numero: e.target.value ? Number(e.target.value) : null })}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
-            placeholder="Ej: 27"
-          />
-        </Campo>
-
-        <Campo label="Categoría">
-          <select
-            value={form.categoria_id ?? ""}
-            onChange={(e) => setForm({ ...form, categoria_id: e.target.value || null })}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
-          >
-            <option value="">Sin categoría todavía</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
         </Campo>
 
         <Campo label="Bici (marca y modelo)">
@@ -177,6 +174,28 @@ function MiPerfilForm({ perfilInicial }: { perfilInicial: Perfil }) {
           )}
         </AnimatePresence>
       </form>
+
+      {misTorneos.length > 0 && (
+        <div>
+          <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Corrés en</p>
+          <div className="flex flex-col gap-2">
+            {misTorneos.map((t) => (
+              <Link
+                key={t.torneoId}
+                href={`/t/${t.torneoId}`}
+                className="flex items-center justify-between rounded-lg border border-tg-border bg-tg-surface px-4 py-3"
+              >
+                <span className="font-semibold text-sm">{t.torneoNombre}</span>
+                <span className="text-xs text-tg-text-dim">{t.categoriaNombre ?? "sin categoría"}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Link href="/" className="text-center text-xs uppercase tracking-widest text-tg-green">
+        Ver todos los torneos →
+      </Link>
     </div>
   );
 }
@@ -201,7 +220,7 @@ function MiPerfilGated() {
 
 export default function MiPerfilPage() {
   return (
-    <RoleGate permitido={["corredor", "organizador", "superadmin"]}>
+    <RoleGate requiereSesion seccion="Mi perfil">
       <MiPerfilGated />
     </RoleGate>
   );

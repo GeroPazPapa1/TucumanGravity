@@ -11,13 +11,14 @@ export interface FilaRanking {
   bici: string | null;
   equipo: string | null;
   fotoUrl: string | null;
-  categoriaId: string;
+  categoriaSlug: string;
   totalPuntos: number;
   esPrecarga: boolean;
 }
 
 interface RankingListProps {
   filas: FilaRanking[];
+  torneoId: string;
 }
 
 const listVariants = {
@@ -30,7 +31,7 @@ const itemVariants = {
   show: { opacity: 1, x: 0 },
 };
 
-export default function RankingList({ filas }: RankingListProps) {
+export default function RankingList({ filas, torneoId }: RankingListProps) {
   if (filas.length === 0) {
     return (
       <p className="text-center text-tg-text-dim text-sm py-10">
@@ -50,7 +51,7 @@ export default function RankingList({ filas }: RankingListProps) {
           <>
             {podio && <div className="absolute left-0 top-0 bottom-0 w-1 tg-gradient-bar-animated" />}
             <span className="font-display text-2xl w-8 text-center text-tg-text-dim shrink-0">{posicion}</span>
-            <RiderAvatar nombre={fila.nombre} fotoUrl={fila.fotoUrl} categoriaId={fila.categoriaId} size={44} />
+            <RiderAvatar nombre={fila.nombre} fotoUrl={fila.fotoUrl} categoriaId={fila.categoriaSlug} size={44} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate flex items-center gap-2">
                 {fila.nombre}
@@ -77,7 +78,7 @@ export default function RankingList({ filas }: RankingListProps) {
             {fila.esPrecarga ? (
               <div className={className}>{contenido}</div>
             ) : (
-              <Link href={`/corredores/${fila.corredorId}`} className={className}>
+              <Link href={`/t/${torneoId}/corredores/${fila.corredorId}`} className={className}>
                 {contenido}
               </Link>
             )}

@@ -3,21 +3,27 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/AuthProvider";
-import type { Rol } from "@/lib/supabase/types";
-
-const nombreRol: Record<Rol, string> = {
-  corredor: "Corredor",
-  organizador: "Organizador",
-  superadmin: "Super admin",
-};
 
 interface RoleGateProps {
-  permitido: Rol[];
   children: React.ReactNode;
+  /** Alcanza con estar logueado (cualquier cuenta). */
+  requiereSesion?: boolean;
+  /** Solo el super admin de la plataforma. */
+  soloSuperadmin?: boolean;
+  /** Solo quien organiza este torneo puntual (o el super admin). */
+  organizadorDe?: string;
+  /** Nombre de la sección, en mayúsculas de un cartel (ej: "Panel del organizador"). */
+  seccion?: string;
 }
 
-export default function RoleGate({ permitido, children }: RoleGateProps) {
-  const { user, rol, cargando } = useAuth();
+export default function RoleGate({
+  children,
+  requiereSesion,
+  soloSuperadmin,
+  organizadorDe,
+  seccion,
+}: RoleGateProps) {
+  const { user, rol, cargando, esOrganizadorDe } = useAuth();
 
   if (cargando) {
     return <div className="py-16 text-center text-sm text-tg-text-dim">Cargando…</div>;
@@ -38,7 +44,7 @@ export default function RoleGate({ permitido, children }: RoleGateProps) {
         </div>
         <p className="font-display text-xl tracking-wide">NECESITÁS INICIAR SESIÓN</p>
         <p className="text-sm text-tg-text-dim max-w-xs">
-          Entrá con tu cuenta de Tucumán Gravity para acceder a esta sección.
+          {seccion ? `${seccion}: iniciá sesión para continuar.` : "Iniciá sesión para continuar."}
         </p>
         <Link
           href="/ingresar"
@@ -50,7 +56,12 @@ export default function RoleGate({ permitido, children }: RoleGateProps) {
     );
   }
 
-  if (!rol || !permitido.includes(rol)) {
+  const permitido =
+    (!soloSuperadmin && !organizadorDe && requiereSesion) ||
+    (soloSuperadmin && rol === "superadmin") ||
+    (organizadorDe !== undefined && esOrganizadorDe(organizadorDe));
+
+  if (!permitido) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -65,8 +76,7 @@ export default function RoleGate({ permitido, children }: RoleGateProps) {
         </div>
         <p className="font-display text-xl tracking-wide">ACCESO RESTRINGIDO</p>
         <p className="text-sm text-tg-text-dim max-w-xs">
-          Tu cuenta es <strong className="text-tg-text">{rol ? nombreRol[rol] : "sin perfil"}</strong>. Esta
-          sección es solo para {permitido.map((r) => nombreRol[r]).join(" / ")}.
+          {seccion ? `${seccion}: tu cuenta no tiene permiso acá.` : "Tu cuenta no tiene permiso acá."}
         </p>
         <Link href="/" className="mt-2 text-xs uppercase tracking-widest text-tg-green hover:underline">
           Volver al inicio

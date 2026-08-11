@@ -1,27 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { motion } from "framer-motion";
 import RoleGate from "@/components/RoleGate";
 import OrganizadorCarreras from "./OrganizadorCarreras";
 import OrganizadorResultados from "./OrganizadorResultados";
+import OrganizadorCategorias from "./OrganizadorCategorias";
 
-type Tab = "resultados" | "carreras";
+type Tab = "resultados" | "carreras" | "categorias";
 
-function PanelOrganizador() {
+function PanelOrganizador({ torneoId }: { torneoId: string }) {
   const [tab, setTab] = useState<Tab>("resultados");
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl tracking-wide">PANEL DEL ORGANIZADOR</h1>
-        <p className="text-tg-text-dim text-sm">Cargá resultados, editá fechas y marcá carreras como disputadas.</p>
+        <p className="text-tg-text-dim text-sm">Cargá resultados, editá fechas y categorías de este torneo.</p>
       </div>
 
       <div className="flex gap-2">
         {[
-          { id: "resultados" as Tab, label: "Cargar resultados" },
-          { id: "carreras" as Tab, label: "Carreras y circuitos" },
+          { id: "resultados" as Tab, label: "Resultados" },
+          { id: "carreras" as Tab, label: "Fechas" },
+          { id: "categorias" as Tab, label: "Categorías" },
         ].map((item) => (
           <button
             key={item.id}
@@ -38,16 +40,20 @@ function PanelOrganizador() {
       </div>
 
       <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        {tab === "resultados" ? <OrganizadorResultados /> : <OrganizadorCarreras />}
+        {tab === "resultados" && <OrganizadorResultados torneoId={torneoId} />}
+        {tab === "carreras" && <OrganizadorCarreras torneoId={torneoId} />}
+        {tab === "categorias" && <OrganizadorCategorias torneoId={torneoId} />}
       </motion.div>
     </div>
   );
 }
 
-export default function OrganizadorPage() {
+export default function OrganizadorPage({ params }: { params: Promise<{ torneo: string }> }) {
+  const { torneo: torneoId } = use(params);
+
   return (
-    <RoleGate permitido={["organizador", "superadmin"]}>
-      <PanelOrganizador />
+    <RoleGate organizadorDe={torneoId} seccion="Panel del organizador">
+      <PanelOrganizador torneoId={torneoId} />
     </RoleGate>
   );
 }

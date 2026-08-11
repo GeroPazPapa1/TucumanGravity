@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import RoleGate from "@/components/RoleGate";
 import Logo from "@/components/Logo";
-import { getCategoryAccent } from "@/components/categoryColors";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Rol } from "@/lib/supabase/types";
 
+type Torneo = Database["public"]["Tables"]["torneos"]["Row"];
 type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
 type Perfil = Database["public"]["Tables"]["perfiles"]["Row"];
 type Precarga = Database["public"]["Tables"]["corredores_precarga"]["Row"];
-type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
+type Inscripcion = Database["public"]["Tables"]["torneo_inscripciones"]["Row"];
+type Miembro = Database["public"]["Tables"]["torneo_miembros"]["Row"];
 
 const nombreRol: Record<Rol, string> = {
   corredor: "Corredor",
-  organizador: "Organizador",
   superadmin: "Super admin",
 };
 
@@ -23,37 +23,60 @@ const listVariants = { hidden: {}, show: { transition: { staggerChildren: 0.04 }
 const itemVariants = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
 function PanelSuperAdmin() {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [torneos, setTorneos] = useState<Torneo[]>([]);
   const [perfiles, setPerfiles] = useState<Perfil[]>([]);
-  const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [resultadosCount, setResultadosCount] = useState(0);
-  const [precarga, setPrecarga] = useState<Precarga[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [vinculando, setVinculando] = useState<string | null>(null);
-  const [seleccion, setSeleccion] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<string | null>(null);
 
-  async function cargarTodo() {
+  const [torneoSeleccionado, setTorneoSeleccionado] = useState<string>("");
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
+  const [precarga, setPrecarga] = useState<Precarga[]>([]);
+  const [miembros, setMiembros] = useState<Miembro[]>([]);
+  const [seleccion, setSeleccion] = useState<Record<string, string>>({});
+  const [nuevoOrganizador, setNuevoOrganizador] = useState("");
+  const [vinculando, setVinculando] = useState<string | null>(null);
+
+  async function cargarGlobal() {
     const supabase = createClient();
-    const [{ data: cat }, { data: perf }, { data: carr }, { count }, { data: pre }] = await Promise.all([
-      supabase.from("categorias").select("*").order("orden"),
+    const [{ data: t }, { data: perf }, { count }] = await Promise.all([
+      supabase.from("torneos").select("*").order("nombre"),
       supabase.from("perfiles").select("*").order("nombre"),
-      supabase.from("carreras").select("*"),
       supabase.from("resultados").select("*", { count: "exact", head: true }),
-      supabase.from("corredores_precarga").select("*"),
     ]);
-    setCategorias(cat ?? []);
+    setTorneos(t ?? []);
     setPerfiles(perf ?? []);
-    setCarreras(carr ?? []);
     setResultadosCount(count ?? 0);
-    setPrecarga(pre ?? []);
+    if (!torneoSeleccionado && t && t.length > 0) setTorneoSeleccionado(t[0].id);
     setCargando(false);
   }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de datos desde Supabase al montar
-    cargarTodo();
+    cargarGlobal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function cargarTorneo(torneoId: string) {
+    if (!torneoId) return;
+    const supabase = createClient();
+    const [{ data: cat }, { data: insc }, { data: pre }, { data: miem }] = await Promise.all([
+      supabase.from("categorias").select("*").eq("torneo_id", torneoId).order("orden"),
+      supabase.from("torneo_inscripciones").select("*").eq("torneo_id", torneoId),
+      supabase.from("corredores_precarga").select("*").eq("torneo_id", torneoId),
+      supabase.from("torneo_miembros").select("*").eq("torneo_id", torneoId),
+    ]);
+    setCategorias(cat ?? []);
+    setInscripciones(insc ?? []);
+    setPrecarga(pre ?? []);
+    setMiembros(miem ?? []);
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga datos del torneo elegido
+    if (torneoSeleccionado) cargarTorneo(torneoSeleccionado);
+  }, [torneoSeleccionado]);
 
   async function cambiarRol(perfilId: string, nuevoRol: Rol) {
     const supabase = createClient();
@@ -62,9 +85,13 @@ function PanelSuperAdmin() {
       setMensaje("Error: " + error.message);
       return;
     }
-    setMensaje("Rol actualizado.");
-    setTimeout(() => setMensaje(null), 2500);
-    await cargarTodo();
+    mostrarMensaje("Rol actualizado.");
+    await cargarGlobal();
+  }
+
+  function mostrarMensaje(texto: string) {
+    setMensaje(texto);
+    setTimeout(() => setMensaje(null), 3000);
   }
 
   async function vincular(precargaId: string) {
@@ -78,35 +105,95 @@ function PanelSuperAdmin() {
     });
     setVinculando(null);
     if (error) {
-      setMensaje("Error: " + error.message);
+      mostrarMensaje("Error: " + error.message);
       return;
     }
-    setMensaje("Corredor vinculado. Sus puntos ya pasaron a su cuenta.");
-    setTimeout(() => setMensaje(null), 3000);
-    await cargarTodo();
+    mostrarMensaje("Corredor vinculado. Sus puntos ya pasaron a su cuenta.");
+    await cargarTorneo(torneoSeleccionado);
+  }
+
+  async function alternarActivo(torneo: Torneo) {
+    const supabase = createClient();
+    const { error } = await supabase.from("torneos").update({ activo: !torneo.activo }).eq("id", torneo.id);
+    if (error) {
+      mostrarMensaje("Error: " + error.message);
+      return;
+    }
+    await cargarGlobal();
+  }
+
+  async function agregarOrganizador() {
+    if (!nuevoOrganizador || !torneoSeleccionado) return;
+    const supabase = createClient();
+    const { error } = await supabase.rpc("asignar_organizador", {
+      p_torneo_id: torneoSeleccionado,
+      p_perfil_id: nuevoOrganizador,
+    });
+    if (error) {
+      mostrarMensaje("Error: " + error.message);
+      return;
+    }
+    setNuevoOrganizador("");
+    mostrarMensaje("Organizador asignado.");
+    await cargarTorneo(torneoSeleccionado);
+  }
+
+  async function quitarOrganizador(perfilId: string) {
+    const supabase = createClient();
+    const { error } = await supabase.rpc("quitar_organizador", {
+      p_torneo_id: torneoSeleccionado,
+      p_perfil_id: perfilId,
+    });
+    if (error) {
+      mostrarMensaje("Error: " + error.message);
+      return;
+    }
+    await cargarTorneo(torneoSeleccionado);
   }
 
   if (cargando) return <div className="py-16 text-center text-sm text-tg-text-dim">Cargando…</div>;
 
-  const disputadas = carreras.filter((c) => c.estado === "disputada").length;
   const precargaSinVincular = precarga.filter((p) => !p.perfil_id);
   const perfilesYaVinculados = new Set(precarga.filter((p) => p.perfil_id).map((p) => p.perfil_id));
+  const torneoActual = torneos.find((t) => t.id === torneoSeleccionado);
+  const organizadoresIds = new Set(miembros.map((m) => m.perfil_id));
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl tracking-wide">SUPER ADMIN</h1>
-        <p className="text-tg-text-dim text-sm">Control total: usuarios, identidad visual y sponsors.</p>
+        <p className="text-tg-text-dim text-sm">Control total: torneos, usuarios, identidad visual y sponsors.</p>
       </div>
 
       {mensaje && <p className="text-sm text-tg-green">{mensaje}</p>}
 
       <section>
-        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Resumen del torneo</h2>
+        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Resumen de la plataforma</h2>
         <div className="grid grid-cols-3 gap-3">
+          <Stat valor={torneos.length} label="Torneos" />
           <Stat valor={perfiles.length} label="Corredores" />
-          <Stat valor={`${disputadas}/${carreras.length}`} label="Fechas corridas" />
           <Stat valor={resultadosCount} label="Resultados cargados" />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Torneos</h2>
+        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+          {torneos.map((t) => (
+            <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex-1 text-sm font-semibold">{t.nombre}</span>
+              <button
+                onClick={() => alternarActivo(t)}
+                className={`text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full border ${
+                  t.activo
+                    ? "text-tg-green border-tg-green/40 bg-tg-green/10"
+                    : "text-tg-text-dim border-tg-border"
+                }`}
+              >
+                {t.activo ? "Activo" : "Inactivo"}
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -116,7 +203,7 @@ function PanelSuperAdmin() {
           <Logo size={56} />
           <div className="flex-1">
             <p className="font-semibold text-sm">Escudo oficial</p>
-            <p className="text-xs text-tg-text-dim">Gestión de assets de marca: próximamente en este panel.</p>
+            <p className="text-xs text-tg-text-dim">Gestión de assets de marca por torneo: próximamente en este panel.</p>
           </div>
         </div>
       </section>
@@ -132,55 +219,123 @@ function PanelSuperAdmin() {
         </div>
       </section>
 
-      {precargaSinVincular.length > 0 && (
-        <section>
-          <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">
-            Ranking histórico sin vincular ({precargaSinVincular.length})
-          </h2>
-          <p className="text-xs text-tg-text-dim mb-2">
-            Corredores reales del ranking cargado que todavía no crearon su cuenta. Cuando alguien se registre y
-            complete su categoría, vinculalo acá para que sus puntos pasen a su perfil real.
-          </p>
-          <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
-            {precargaSinVincular.map((p) => {
-              const candidatos = perfiles.filter(
-                (perfil) => perfil.categoria_id === p.categoria_id && !perfilesYaVinculados.has(perfil.id)
-              );
-              return (
-                <div key={p.id} className="flex flex-col gap-2 px-3 py-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{p.nombre}</span>
-                    <span className="font-display text-tg-green text-sm">{p.puntos_iniciales} pts</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={seleccion[p.id] ?? ""}
-                      onChange={(e) => setSeleccion((s) => ({ ...s, [p.id]: e.target.value }))}
-                      className="flex-1 rounded-lg border border-tg-border bg-tg-bg px-2 py-1.5 text-xs"
-                    >
-                      <option value="">
-                        {candidatos.length ? "Elegir cuenta registrada…" : "Nadie registrado en esta categoría todavía"}
+      <section className="border-t border-tg-border pt-5">
+        <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">Gestión por torneo</h2>
+        <select
+          value={torneoSeleccionado}
+          onChange={(e) => setTorneoSeleccionado(e.target.value)}
+          className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm mb-4"
+        >
+          {torneos.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nombre}
+            </option>
+          ))}
+        </select>
+
+        {torneoActual && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-tg-text-dim mb-2">Organizadores</p>
+              <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border mb-2">
+                {miembros.length === 0 && (
+                  <p className="px-4 py-3 text-sm text-tg-text-dim">Todavía nadie organiza este torneo.</p>
+                )}
+                {miembros.map((m) => {
+                  const perfil = perfiles.find((p) => p.id === m.perfil_id);
+                  return (
+                    <div key={m.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="flex-1 text-sm">{perfil?.nombre ?? m.perfil_id}</span>
+                      <button
+                        onClick={() => quitarOrganizador(m.perfil_id)}
+                        className="text-[10px] uppercase tracking-widest text-tg-magenta"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={nuevoOrganizador}
+                  onChange={(e) => setNuevoOrganizador(e.target.value)}
+                  className="flex-1 rounded-lg border border-tg-border bg-tg-surface px-2 py-1.5 text-xs"
+                >
+                  <option value="">Elegir corredor…</option>
+                  {perfiles
+                    .filter((p) => !organizadoresIds.has(p.id))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre}
                       </option>
-                      {candidatos.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => vincular(p.id)}
-                      disabled={!seleccion[p.id] || vinculando === p.id}
-                      className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-3 disabled:opacity-40"
-                    >
-                      {vinculando === p.id ? "…" : "Vincular"}
-                    </button>
-                  </div>
+                    ))}
+                </select>
+                <button
+                  onClick={agregarOrganizador}
+                  disabled={!nuevoOrganizador}
+                  className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-3 disabled:opacity-40"
+                >
+                  Asignar
+                </button>
+              </div>
+            </div>
+
+            {precargaSinVincular.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-widest text-tg-text-dim mb-2">
+                  Ranking histórico sin vincular ({precargaSinVincular.length})
+                </p>
+                <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+                  {precargaSinVincular.map((p) => {
+                    const candidatos = perfiles.filter((perfil) => {
+                      const insc = inscripciones.find((i) => i.perfil_id === perfil.id);
+                      return insc?.categoria_id === p.categoria_id && !perfilesYaVinculados.has(perfil.id);
+                    });
+                    return (
+                      <div key={p.id} className="flex flex-col gap-2 px-3 py-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">{p.nombre}</span>
+                          <span className="font-display text-tg-green text-sm">{p.puntos_iniciales} pts</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <select
+                            value={seleccion[p.id] ?? ""}
+                            onChange={(e) => setSeleccion((s) => ({ ...s, [p.id]: e.target.value }))}
+                            className="flex-1 rounded-lg border border-tg-border bg-tg-bg px-2 py-1.5 text-xs"
+                          >
+                            <option value="">
+                              {candidatos.length ? "Elegir cuenta registrada…" : "Nadie inscripto en esa categoría todavía"}
+                            </option>
+                            {candidatos.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => vincular(p.id)}
+                            disabled={!seleccion[p.id] || vinculando === p.id}
+                            className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-3 disabled:opacity-40"
+                          >
+                            {vinculando === p.id ? "…" : "Vincular"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {categorias.length === 0 && (
+              <p className="text-sm text-tg-text-dim">
+                Este torneo todavía no tiene categorías — el organizador las carga desde su panel.
+              </p>
+            )}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       <section>
         <h2 className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">
@@ -192,33 +347,22 @@ function PanelSuperAdmin() {
           variants={listVariants}
           className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border max-h-[420px] overflow-y-auto"
         >
-          {perfiles.map((p) => {
-            const categoria = categorias.find((c) => c.id === p.categoria_id);
-            const accent = getCategoryAccent(p.categoria_id ?? "");
-            return (
-              <motion.div key={p.id} variants={itemVariants} className="flex items-center gap-3 px-3 py-2.5">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{p.nombre}</p>
-                  {categoria && (
-                    <span className={`text-[10px] uppercase tracking-widest font-semibold ${accent.text}`}>
-                      {categoria.nombre}
-                    </span>
-                  )}
-                </div>
-                <select
-                  value={p.rol}
-                  onChange={(e) => cambiarRol(p.id, e.target.value as Rol)}
-                  className="rounded-md border border-tg-border bg-tg-bg px-2 py-1 text-xs"
-                >
-                  {(Object.keys(nombreRol) as Rol[]).map((r) => (
-                    <option key={r} value={r}>
-                      {nombreRol[r]}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
-            );
-          })}
+          {perfiles.map((p) => (
+            <motion.div key={p.id} variants={itemVariants} className="flex items-center gap-3 px-3 py-2.5">
+              <span className="flex-1 text-sm truncate">{p.nombre}</span>
+              <select
+                value={p.rol}
+                onChange={(e) => cambiarRol(p.id, e.target.value as Rol)}
+                className="rounded-md border border-tg-border bg-tg-bg px-2 py-1 text-xs"
+              >
+                {(Object.keys(nombreRol) as Rol[]).map((r) => (
+                  <option key={r} value={r}>
+                    {nombreRol[r]}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
     </div>
@@ -236,7 +380,7 @@ function Stat({ valor, label }: { valor: string | number; label: string }) {
 
 export default function AdminPage() {
   return (
-    <RoleGate permitido={["superadmin"]}>
+    <RoleGate soloSuperadmin seccion="Panel de super admin">
       <PanelSuperAdmin />
     </RoleGate>
   );

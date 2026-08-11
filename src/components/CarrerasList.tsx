@@ -32,13 +32,17 @@ const itemVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function CarrerasList({ carreras }: { carreras: Carrera[] }) {
+export default function CarrerasList({ carreras, torneoId }: { carreras: Carrera[]; torneoId: string }) {
+  if (carreras.length === 0) {
+    return <p className="text-center text-tg-text-dim text-sm py-10">Este torneo todavía no tiene fechas cargadas.</p>;
+  }
+
   return (
     <motion.ol initial="hidden" animate="show" variants={listVariants} className="flex flex-col gap-3">
       {carreras.map((carrera) => (
         <motion.li key={carrera.id} variants={itemVariants}>
           <Link
-            href={`/carreras/${carrera.id}`}
+            href={`/t/${torneoId}/carreras/${carrera.id}`}
             className="flex items-center gap-4 rounded-xl border border-tg-border bg-tg-surface p-4 transition-all hover:border-tg-green/50 hover:-translate-y-0.5"
           >
             <span className="font-display text-3xl text-tg-text-dim shrink-0 w-10 text-center">

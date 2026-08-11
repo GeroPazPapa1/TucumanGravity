@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import Logo from "@/components/Logo";
 import RiderAvatar from "@/components/RiderAvatar";
 import SponsorFooter from "@/components/SponsorFooter";
 import { getCategoryAccent } from "@/components/categoryColors";
+import type { Database } from "@/lib/supabase/types";
+
+type Torneo = Database["public"]["Tables"]["torneos"]["Row"];
 
 interface Carrera {
   id: string;
@@ -16,6 +18,7 @@ interface Carrera {
 
 interface Lider {
   categoriaId: string;
+  categoriaSlug: string;
   categoriaNombre: string;
   nombre: string;
   fotoUrl: string | null;
@@ -25,6 +28,7 @@ interface Lider {
 }
 
 interface HomeHeroProps {
+  torneo: Torneo;
   proximaCarrera: Carrera | null;
   carrerasDisputadas: number;
   totalCarreras: number;
@@ -41,45 +45,38 @@ const itemVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function HomeHero({ proximaCarrera, carrerasDisputadas, totalCarreras, lideres }: HomeHeroProps) {
+export default function HomeHero({ torneo, proximaCarrera, carrerasDisputadas, totalCarreras, lideres }: HomeHeroProps) {
+  const base = `/t/${torneo.id}`;
+  const [primero, ...resto] = torneo.nombre.split(" ");
+
   return (
     <div className="flex flex-col gap-8">
       <section className="relative flex flex-col items-center text-center gap-3 pt-6 pb-2 overflow-hidden">
         <div className="tg-blob w-64 h-64 -top-10 -left-10 bg-tg-violet" />
         <div className="tg-blob w-56 h-56 -top-6 -right-6 bg-tg-magenta" />
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative tg-float"
-        >
-          <Logo size={112} />
-        </motion.div>
-
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="relative font-display text-3xl tracking-wide"
+          transition={{ duration: 0.4 }}
+          className="relative font-display text-3xl tracking-wide uppercase"
         >
-          TUCUMÁN <span className="tg-gradient-text">GRAVITY</span>
+          {primero} <span className="tg-gradient-text">{resto.join(" ")}</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.28, duration: 0.4 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
           className="relative text-tg-text-dim text-sm max-w-xs"
         >
-          El torneo de descenso de Tucumán. Resultados, ranking y perfil de
-          cada corredor, todo en un solo lugar.
+          Resultados, ranking y perfil de cada corredor, todo en un solo lugar.
         </motion.p>
       </section>
 
       {proximaCarrera && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Link
-            href={`/carreras/${proximaCarrera.id}`}
+            href={`${base}/carreras/${proximaCarrera.id}`}
             className="block rounded-xl border border-tg-border bg-tg-surface p-4 relative overflow-hidden transition-transform hover:-translate-y-0.5 hover:border-tg-green/40"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 tg-gradient-bar-animated" />
@@ -94,9 +91,9 @@ export default function HomeHero({ proximaCarrera, carrerasDisputadas, totalCarr
 
       <motion.section initial="hidden" animate="show" variants={listVariants} className="grid grid-cols-3 gap-3">
         {[
-          { href: "/corredores", label: "Corredores" },
-          { href: "/ranking", label: "Ranking" },
-          { href: "/carreras", label: "Carreras" },
+          { href: `${base}/corredores`, label: "Corredores" },
+          { href: `${base}/ranking`, label: "Ranking" },
+          { href: `${base}/carreras`, label: "Carreras" },
         ].map((item) => (
           <motion.div key={item.href} variants={itemVariants}>
             <Link
@@ -112,32 +109,38 @@ export default function HomeHero({ proximaCarrera, carrerasDisputadas, totalCarr
       <section>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="font-display text-xl tracking-wide">Líderes por categoría</h2>
-          <Link href="/ranking" className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
+          <Link href={`${base}/ranking`} className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
             Ver todo
           </Link>
         </div>
-        <motion.div initial="hidden" animate="show" variants={listVariants} className="flex flex-col gap-2">
-          {lideres.map((lider) => {
-            const accent = getCategoryAccent(lider.categoriaId);
-            return (
-              <motion.div key={lider.categoriaId} variants={itemVariants}>
-                <Link
-                  href={`/ranking?categoria=${lider.categoriaId}`}
-                  className="flex items-center gap-3 rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 transition-all hover:border-tg-green/60 hover:-translate-y-0.5"
-                >
-                  <RiderAvatar nombre={lider.nombre} fotoUrl={lider.fotoUrl} categoriaId={lider.categoriaId} size={40} />
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[10px] uppercase tracking-widest font-semibold ${accent.text}`}>
-                      {lider.categoriaNombre}
-                    </p>
-                    <p className="truncate font-semibold">{lider.nombre}</p>
-                  </div>
-                  <p className="font-display text-tg-green text-lg">{lider.totalPuntos}</p>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+        {lideres.length === 0 ? (
+          <p className="text-center text-tg-text-dim text-sm py-8">
+            Todavía no hay corredores cargados en este torneo.
+          </p>
+        ) : (
+          <motion.div initial="hidden" animate="show" variants={listVariants} className="flex flex-col gap-2">
+            {lideres.map((lider) => {
+              const accent = getCategoryAccent(lider.categoriaSlug);
+              return (
+                <motion.div key={lider.categoriaId} variants={itemVariants}>
+                  <Link
+                    href={`${base}/ranking?categoria=${lider.categoriaId}`}
+                    className="flex items-center gap-3 rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 transition-all hover:border-tg-green/60 hover:-translate-y-0.5"
+                  >
+                    <RiderAvatar nombre={lider.nombre} fotoUrl={lider.fotoUrl} categoriaId={lider.categoriaSlug} size={40} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[10px] uppercase tracking-widest font-semibold ${accent.text}`}>
+                        {lider.categoriaNombre}
+                      </p>
+                      <p className="truncate font-semibold">{lider.nombre}</p>
+                    </div>
+                    <p className="font-display text-tg-green text-lg">{lider.totalPuntos}</p>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
       </section>
 
       <section className="text-center text-xs text-tg-text-dim">

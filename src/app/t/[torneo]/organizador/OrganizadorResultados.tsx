@@ -7,15 +7,20 @@ import type { Database } from "@/lib/supabase/types";
 
 type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
 type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
-type Perfil = Database["public"]["Tables"]["perfiles"]["Row"];
 type Resultado = Database["public"]["Tables"]["resultados"]["Row"];
+
+interface CorredorInscripto {
+  id: string;
+  nombre: string;
+  puntosIniciales: number;
+}
 
 interface FilaForm {
   posicion: number;
   puntos: number;
 }
 
-function filasIniciales(corredores: Perfil[], carreraId: string, resultados: Resultado[]) {
+function filasIniciales(corredores: CorredorInscripto[], carreraId: string, resultados: Resultado[]) {
   const iniciales: Record<string, FilaForm> = {};
   corredores.forEach((c, index) => {
     const existente = resultados.find((r) => r.carrera_id === carreraId && r.corredor_id === c.id);
@@ -29,7 +34,7 @@ function filasIniciales(corredores: Perfil[], carreraId: string, resultados: Res
 interface CargaResultadosFormProps {
   carreraId: string;
   categoriaId: string;
-  corredoresCategoria: Perfil[];
+  corredoresCategoria: CorredorInscripto[];
   resultadosCategoria: Resultado[];
   onGuardado: () => void;
 }
@@ -50,7 +55,7 @@ function CargaResultadosForm({
   const [error, setError] = useState<string | null>(null);
 
   function totalActual(corredorId: string) {
-    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntos_iniciales ?? 0;
+    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntosIniciales ?? 0;
     const suma = resultadosCategoria
       .filter((r) => r.corredor_id === corredorId)
       .reduce((s, r) => s + r.puntos, 0);
@@ -58,7 +63,7 @@ function CargaResultadosForm({
   }
 
   function totalConPendientes(corredorId: string) {
-    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntos_iniciales ?? 0;
+    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntosIniciales ?? 0;
     const sumaOtrasCarreras = resultadosCategoria
       .filter((r) => r.corredor_id === corredorId && r.carrera_id !== carreraId)
       .reduce((s, r) => s + r.puntos, 0);
@@ -119,8 +124,8 @@ function CargaResultadosForm({
   if (corredoresCategoria.length === 0) {
     return (
       <p className="text-center text-sm text-tg-text-dim py-10">
-        Todavía no hay corredores registrados en esta categoría. Necesitás que se registren en la app antes de
-        poder cargarles resultados.
+        Todavía no hay corredores inscriptos en esta categoría. Necesitás que se registren y elijan su categoría
+        en este torneo antes de poder cargarles resultados.
       </p>
     );
   }
@@ -218,21 +223,22 @@ function CargaResultadosForm({
   );
 }
 
-export default function OrganizadorResultados() {
+export default function OrganizadorResultados({ torneoId }: { torneoId: string }) {
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carreraId, setCarreraId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
-  const [corredoresCategoria, setCorredoresCategoria] = useState<Perfil[]>([]);
+  const [corredoresCategoria, setCorredoresCategoria] = useState<CorredorInscripto[]>([]);
   const [resultadosCategoria, setResultadosCategoria] = useState<Resultado[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     (async () => {
+      setCargando(true);
       const supabase = createClient();
       const [{ data: c }, { data: cat }] = await Promise.all([
-        supabase.from("carreras").select("*").order("numero"),
-        supabase.from("categorias").select("*").order("orden"),
+        supabase.from("carreras").select("*").eq("torneo_id", torneoId).order("numero"),
+        supabase.from("categorias").select("*").eq("torneo_id", torneoId).order("orden"),
       ]);
       setCarreras(c ?? []);
       setCategorias(cat ?? []);
@@ -240,24 +246,46 @@ export default function OrganizadorResultados() {
       setCategoriaId(cat?.[0]?.id ?? "");
       setCargando(false);
     })();
-  }, []);
+  }, [torneoId]);
 
   async function cargarDatosCategoria(catId: string) {
     const supabase = createClient();
-    const [{ data: corredores }, { data: resultados }] = await Promise.all([
-      supabase.from("perfiles").select("*").eq("categoria_id", catId).order("nombre"),
+    const [{ data: inscripciones }, { data: resultados }] = await Promise.all([
+      supabase.from("torneo_inscripciones").select("perfil_id, puntos_iniciales").eq("torneo_id", torneoId).eq("categoria_id", catId),
       supabase.from("resultados").select("*").eq("categoria_id", catId),
     ]);
-    setCorredoresCategoria(corredores ?? []);
+
+    const perfilIds = (inscripciones ?? []).map((i) => i.perfil_id);
+    const { data: perfilesData } = perfilIds.length
+      ? await supabase.from("perfiles").select("id, nombre").in("id", perfilIds).order("nombre")
+      : { data: [] };
+
+    const corredores: CorredorInscripto[] = (perfilesData ?? []).map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      puntosIniciales: (inscripciones ?? []).find((i) => i.perfil_id === p.id)?.puntos_iniciales ?? 0,
+    }));
+
+    setCorredoresCategoria(corredores);
     setResultadosCategoria(resultados ?? []);
   }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga datos de Supabase al cambiar de categoría
     if (categoriaId) cargarDatosCategoria(categoriaId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoriaId]);
 
   if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando…</div>;
+
+  if (carreras.length === 0 || categorias.length === 0) {
+    return (
+      <p className="text-center text-sm text-tg-text-dim py-10">
+        Necesitás tener al menos una fecha y una categoría cargadas en este torneo antes de poder cargar
+        resultados.
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

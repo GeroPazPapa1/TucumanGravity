@@ -4,38 +4,54 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import RiderAvatar from "@/components/RiderAvatar";
 import { getCategoryAccent } from "@/components/categoryColors";
-import type { Database } from "@/lib/supabase/types";
-
-type Perfil = Database["public"]["Tables"]["perfiles"]["Row"];
 
 interface CorredorPerfilProps {
-  corredor: Perfil;
+  torneoId: string;
+  torneoNombre: string;
+  nombre: string;
+  fotoUrl: string | null;
+  bici: string | null;
+  equipo: string | null;
+  numero: number | null;
   categoriaNombre: string | null;
+  categoriaSlug: string | null;
   posicion: number | null;
   totalPuntos: number | null;
 }
 
-export default function CorredorPerfil({ corredor, categoriaNombre, posicion, totalPuntos }: CorredorPerfilProps) {
-  const accent = getCategoryAccent(corredor.categoria_id ?? "");
+export default function CorredorPerfil({
+  torneoId,
+  torneoNombre,
+  nombre,
+  fotoUrl,
+  bici,
+  equipo,
+  numero,
+  categoriaNombre,
+  categoriaSlug,
+  posicion,
+  totalPuntos,
+}: CorredorPerfilProps) {
+  const accent = getCategoryAccent(categoriaSlug ?? "");
 
   const datos: { label: string; value: string }[] = [];
-  if (corredor.numero) datos.push({ label: "Número", value: `#${corredor.numero}` });
-  if (corredor.bici) datos.push({ label: "Bici", value: corredor.bici });
-  if (corredor.equipo) datos.push({ label: "Equipo", value: corredor.equipo });
+  if (numero) datos.push({ label: "Número", value: `#${numero}` });
+  if (bici) datos.push({ label: "Bici", value: bici });
+  if (equipo) datos.push({ label: "Equipo", value: equipo });
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
-      <Link href="/corredores" className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
+      <Link href={`/t/${torneoId}/corredores`} className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
         ← Todos los corredores
       </Link>
 
       <div className="flex flex-col items-center text-center gap-3 relative pt-2">
         <div className="absolute inset-x-0 top-0 h-24 tg-gradient-bar opacity-20 blur-2xl -z-10 rounded-full" />
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}>
-          <RiderAvatar nombre={corredor.nombre} fotoUrl={corredor.foto_url} categoriaId={corredor.categoria_id ?? ""} size={128} />
+          <RiderAvatar nombre={nombre} fotoUrl={fotoUrl} categoriaId={categoriaSlug ?? ""} size={128} />
         </motion.div>
         <div>
-          <h1 className="font-display text-2xl tracking-wide">{corredor.nombre}</h1>
+          <h1 className="font-display text-2xl tracking-wide">{nombre}</h1>
           {categoriaNombre && (
             <span className={`inline-block mt-1 text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${accent.border} ${accent.bg} ${accent.text}`}>
               {categoriaNombre}
@@ -70,8 +86,8 @@ export default function CorredorPerfil({ corredor, categoriaNombre, posicion, to
 
       <p className="text-center text-sm text-tg-text-dim px-4">
         {categoriaNombre
-          ? `Parte de Tucumán Gravity. Corriendo en ${categoriaNombre}, temporada tras temporada.`
-          : "Parte de Tucumán Gravity."}
+          ? `Parte de ${torneoNombre}. Corriendo en ${categoriaNombre}, temporada tras temporada.`
+          : `Parte de ${torneoNombre}.`}
       </p>
     </motion.div>
   );
