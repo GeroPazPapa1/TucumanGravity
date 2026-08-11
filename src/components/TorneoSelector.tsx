@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import Logo from "@/components/Logo";
+import PlatformLogo from "@/components/PlatformLogo";
 import SponsorFooter from "@/components/SponsorFooter";
 import type { Database } from "@/lib/supabase/types";
 
@@ -41,7 +41,7 @@ export default function TorneoSelector({ torneos }: { torneos: Torneo[] }) {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="relative tg-float"
         >
-          <Logo size={96} />
+          <PlatformLogo size={96} />
         </motion.div>
 
         <motion.h1

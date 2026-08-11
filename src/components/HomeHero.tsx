@@ -4,6 +4,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import RiderAvatar from "@/components/RiderAvatar";
 import SponsorFooter from "@/components/SponsorFooter";
+import Logo from "@/components/Logo";
+import PlatformLogo from "@/components/PlatformLogo";
 import { getCategoryAccent } from "@/components/categoryColors";
 import type { Database } from "@/lib/supabase/types";
 
@@ -54,6 +56,15 @@ export default function HomeHero({ torneo, proximaCarrera, carrerasDisputadas, t
       <section className="relative flex flex-col items-center text-center gap-3 pt-6 pb-2 overflow-hidden">
         <div className="tg-blob w-64 h-64 -top-10 -left-10 bg-tg-violet" />
         <div className="tg-blob w-56 h-56 -top-6 -right-6 bg-tg-magenta" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative tg-float"
+        >
+          {torneo.id === "tucuman-gravity" ? <Logo size={96} /> : <PlatformLogo size={96} />}
+        </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
