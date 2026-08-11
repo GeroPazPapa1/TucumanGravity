@@ -41,7 +41,7 @@ export default function IngresarPage() {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="font-display text-2xl tracking-wide">INICIAR SESIÓN</h1>
-        <p className="text-tg-text-dim text-sm">Entrá a tu cuenta de Tucumán Gravity.</p>
+        <p className="text-tg-text-dim text-sm">Entrá a tu cuenta de Downhill App.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

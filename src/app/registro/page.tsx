@@ -74,7 +74,7 @@ export default function RegistroPage() {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="font-display text-2xl tracking-wide">CREAR CUENTA</h1>
-        <p className="text-tg-text-dim text-sm">Sumate a Tucumán Gravity con tu perfil de corredor.</p>
+        <p className="text-tg-text-dim text-sm">Sumate a Downhill App con tu perfil de corredor.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

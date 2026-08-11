@@ -9,9 +9,9 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-3 min-w-0">
           <Logo size={40} />
           <div className="leading-none min-w-0">
-            <p className="font-display text-lg tracking-wide truncate">TUCUMÁN GRAVITY</p>
+            <p className="font-display text-lg tracking-wide truncate">DOWNHILL APP</p>
             <p className="text-[11px] uppercase tracking-widest text-tg-text-dim truncate">
-              Organiza Pachamama Bike Shop
+              Todos los torneos, un solo lugar
             </p>
           </div>
         </Link>

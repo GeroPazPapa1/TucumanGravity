@@ -20,9 +20,9 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Tucumán Gravity",
+  title: "Downhill App",
   description:
-    "Torneo de descenso (downhill MTB) de Tucumán. Ranking, fechas y perfiles de corredores.",
+    "Ranking, resultados y perfil de corredor para todos los torneos de descenso (downhill MTB), en un solo lugar.",
 };
 
 export const viewport: Viewport = {
