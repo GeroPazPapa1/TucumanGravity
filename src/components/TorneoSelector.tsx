@@ -25,7 +25,7 @@ const itemVariants = {
 };
 
 export default function TorneoSelector({ torneos }: { torneos: Torneo[] }) {
-  const grupos: { tipo: string; torneos: Torneo[] }[] = ["regional", "nacional", "internacional"]
+  const grupos: { tipo: string; torneos: Torneo[] }[] = ["nacional", "internacional", "regional"]
     .map((tipo) => ({ tipo, torneos: torneos.filter((t) => t.tipo === tipo) }))
     .filter((g) => g.torneos.length > 0);
 
