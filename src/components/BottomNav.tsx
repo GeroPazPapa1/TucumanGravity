@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 const tabs: { slug: string; label: string; icon: ReactNode }[] = [
   {
@@ -44,14 +45,20 @@ const tabs: { slug: string; label: string; icon: ReactNode }[] = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const enTorneo = useEnTorneo();
 
   const match = pathname?.match(/^\/t\/([^/]+)/);
   const torneoId = match?.[1];
 
   if (!torneoId) return null;
 
+  const nav = enTorneo ? "border-tg-border bg-tg-bg/95" : "border-plat-border bg-plat-surface/95";
+  const activeText = enTorneo ? "text-tg-green" : "text-plat-celeste";
+  const inactiveText = enTorneo ? "text-tg-text-dim hover:text-tg-text" : "text-plat-text-dim hover:text-plat-text";
+  const activeBar = enTorneo ? "bg-tg-green" : "bg-plat-celeste";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-tg-border bg-tg-bg/95 backdrop-blur">
+    <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur ${nav}`}>
       <div className="w-full max-w-3xl mx-auto grid grid-cols-3">
         {tabs.map((tab) => {
           const href = `/t/${torneoId}/${tab.slug}`;
@@ -61,13 +68,13 @@ export default function BottomNav() {
               key={tab.slug}
               href={href}
               className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                active ? "text-tg-green" : "text-tg-text-dim hover:text-tg-text"
+                active ? activeText : inactiveText
               }`}
             >
               {active && (
                 <motion.span
                   layoutId="nav-active"
-                  className="absolute inset-x-3 top-0.5 h-0.5 rounded-full bg-tg-green"
+                  className={`absolute inset-x-3 top-0.5 h-0.5 rounded-full ${activeBar}`}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}

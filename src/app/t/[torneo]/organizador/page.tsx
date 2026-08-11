@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { motion } from "framer-motion";
 import RoleGate from "@/components/RoleGate";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 import OrganizadorCarreras from "./OrganizadorCarreras";
 import OrganizadorResultados from "./OrganizadorResultados";
 import OrganizadorCategorias from "./OrganizadorCategorias";
@@ -11,12 +12,18 @@ type Tab = "resultados" | "carreras" | "categorias";
 
 function PanelOrganizador({ torneoId }: { torneoId: string }) {
   const [tab, setTab] = useState<Tab>("resultados");
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const activo = enTorneo ? "border-tg-green bg-tg-green text-tg-bg" : "border-plat-celeste bg-plat-celeste text-white";
+  const inactivo = enTorneo
+    ? "border-tg-border bg-tg-surface text-tg-text-dim"
+    : "border-plat-border bg-plat-surface text-plat-text-dim";
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl tracking-wide">PANEL DEL ORGANIZADOR</h1>
-        <p className="text-tg-text-dim text-sm">Cargá resultados, editá fechas y categorías de este torneo.</p>
+        <p className={`text-sm ${dim}`}>Cargá resultados, editá fechas y categorías de este torneo.</p>
       </div>
 
       <div className="flex gap-2">
@@ -29,9 +36,7 @@ function PanelOrganizador({ torneoId }: { torneoId: string }) {
             key={item.id}
             onClick={() => setTab(item.id)}
             className={`relative flex-1 px-3 py-2.5 rounded-lg border text-xs font-semibold uppercase tracking-wide transition-colors ${
-              tab === item.id
-                ? "border-tg-green bg-tg-green text-tg-bg"
-                : "border-tg-border bg-tg-surface text-tg-text-dim"
+              tab === item.id ? activo : inactivo
             }`}
           >
             {item.label}

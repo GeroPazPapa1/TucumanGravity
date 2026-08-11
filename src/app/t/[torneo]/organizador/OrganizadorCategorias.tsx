@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 import type { Database } from "@/lib/supabase/types";
 
 type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
@@ -16,6 +17,13 @@ function slugify(texto: string) {
 }
 
 export default function OrganizadorCategorias({ torneoId }: { torneoId: string }) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const divide = enTorneo ? "divide-tg-border" : "divide-plat-border";
+  const boton = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
+
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
   const [nombre, setNombre] = useState("");
@@ -62,7 +70,7 @@ export default function OrganizadorCategorias({ torneoId }: { torneoId: string }
     await cargar();
   }
 
-  if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando…</div>;
+  if (cargando) return <div className={`py-10 text-center text-sm ${dim}`}>Cargando…</div>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,12 +79,12 @@ export default function OrganizadorCategorias({ torneoId }: { torneoId: string }
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Nombre de la categoría (ej: Elite)"
-          className="flex-1 rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+          className={`flex-1 rounded-lg border ${border} ${surface} px-3 py-2.5 text-sm`}
         />
         <button
           type="submit"
           disabled={creando || !nombre.trim()}
-          className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-4 disabled:opacity-40"
+          className={`rounded-lg text-xs font-semibold uppercase px-4 disabled:opacity-40 ${boton}`}
         >
           {creando ? "…" : "Agregar"}
         </button>
@@ -85,9 +93,9 @@ export default function OrganizadorCategorias({ torneoId }: { torneoId: string }
       {error && <p className="text-sm text-tg-magenta">{error}</p>}
 
       {categorias.length === 0 ? (
-        <p className="text-center text-sm text-tg-text-dim py-6">Todavía no hay categorías en este torneo.</p>
+        <p className={`text-center text-sm py-6 ${dim}`}>Todavía no hay categorías en este torneo.</p>
       ) : (
-        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+        <div className={`rounded-xl border ${border} ${surface} divide-y ${divide}`}>
           {categorias.map((c) => (
             <div key={c.id} className="px-4 py-3 text-sm">
               {c.nombre}

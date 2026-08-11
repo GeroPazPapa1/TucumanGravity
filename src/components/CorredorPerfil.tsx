@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import RiderAvatar from "@/components/RiderAvatar";
 import { getCategoryAccent } from "@/components/categoryColors";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 interface CorredorPerfilProps {
   torneoId: string;
@@ -32,7 +33,13 @@ export default function CorredorPerfil({
   posicion,
   totalPuntos,
 }: CorredorPerfilProps) {
-  const accent = getCategoryAccent(categoriaSlug ?? "");
+  const enTorneo = useEnTorneo();
+  const accent = getCategoryAccent(categoriaSlug ?? "", !enTorneo);
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const accentText = enTorneo ? "text-tg-green" : "text-plat-celeste";
+  const hoverAccent = enTorneo ? "hover:text-tg-green" : "hover:text-plat-celeste";
 
   const datos: { label: string; value: string }[] = [];
   if (numero) datos.push({ label: "Número", value: `#${numero}` });
@@ -41,7 +48,7 @@ export default function CorredorPerfil({
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
-      <Link href={`/t/${torneoId}/corredores`} className="text-xs uppercase tracking-wide text-tg-text-dim hover:text-tg-green">
+      <Link href={`/t/${torneoId}/corredores`} className={`text-xs uppercase tracking-wide ${dim} ${hoverAccent}`}>
         ← Todos los corredores
       </Link>
 
@@ -62,29 +69,29 @@ export default function CorredorPerfil({
 
       {posicion !== null && totalPuntos !== null && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-tg-border bg-tg-surface p-4 text-center">
-            <p className="font-display text-3xl text-tg-green">{posicion}°</p>
-            <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mt-1">en {categoriaNombre}</p>
+          <div className={`rounded-xl border ${border} ${surface} p-4 text-center`}>
+            <p className={`font-display text-3xl ${accentText}`}>{posicion}°</p>
+            <p className={`text-[11px] uppercase tracking-widest mt-1 ${dim}`}>en {categoriaNombre}</p>
           </div>
-          <div className="rounded-xl border border-tg-border bg-tg-surface p-4 text-center">
-            <p className="font-display text-3xl text-tg-green">{totalPuntos}</p>
-            <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mt-1">puntos acumulados</p>
+          <div className={`rounded-xl border ${border} ${surface} p-4 text-center`}>
+            <p className={`font-display text-3xl ${accentText}`}>{totalPuntos}</p>
+            <p className={`text-[11px] uppercase tracking-widest mt-1 ${dim}`}>puntos acumulados</p>
           </div>
         </div>
       )}
 
       {datos.length > 0 && (
-        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+        <div className={`rounded-xl border ${border} ${surface} divide-y ${enTorneo ? "divide-tg-border" : "divide-plat-border"}`}>
           {datos.map((dato) => (
             <div key={dato.label} className="flex items-center justify-between px-4 py-3">
-              <span className="text-xs uppercase tracking-widest text-tg-text-dim">{dato.label}</span>
+              <span className={`text-xs uppercase tracking-widest ${dim}`}>{dato.label}</span>
               <span className="font-semibold">{dato.value}</span>
             </div>
           ))}
         </div>
       )}
 
-      <p className="text-center text-sm text-tg-text-dim px-4">
+      <p className={`text-center text-sm px-4 ${dim}`}>
         {categoriaNombre
           ? `Parte de ${torneoNombre}. Corriendo en ${categoriaNombre}, temporada tras temporada.`
           : `Parte de ${torneoNombre}.`}

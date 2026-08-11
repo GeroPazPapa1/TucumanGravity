@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/AuthProvider";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
@@ -17,6 +18,7 @@ interface InscripcionWidgetProps {
 
 export default function InscripcionWidget({ torneoId, torneoNombre, categorias }: InscripcionWidgetProps) {
   const { user, cargando: cargandoAuth } = useAuth();
+  const enTorneo = useEnTorneo();
   const [inscripcion, setInscripcion] = useState<Inscripcion | null | undefined>(undefined);
   const [categoriaId, setCategoriaId] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -56,6 +58,10 @@ export default function InscripcionWidget({ torneoId, torneoNombre, categorias }
     }
   }
 
+  const caja = enTorneo ? "border-tg-green/40 bg-tg-green/10" : "border-plat-celeste/40 bg-plat-celeste/10";
+  const select = enTorneo ? "border-tg-border bg-tg-bg" : "border-plat-border bg-plat-surface";
+  const boton = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
+
   return (
     <AnimatePresence>
       {!guardado && (
@@ -64,14 +70,14 @@ export default function InscripcionWidget({ torneoId, torneoNombre, categorias }
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, height: 0 }}
           onSubmit={inscribirse}
-          className="rounded-xl border border-tg-green/40 bg-tg-green/10 p-4 flex flex-col gap-3"
+          className={`rounded-xl border p-4 flex flex-col gap-3 ${caja}`}
         >
           <p className="text-sm font-semibold">Todavía no estás inscripto en {torneoNombre}</p>
           <div className="flex gap-2">
             <select
               value={categoriaId}
               onChange={(e) => setCategoriaId(e.target.value)}
-              className="flex-1 rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm ${select}`}
               required
             >
               <option value="">Elegí tu categoría…</option>
@@ -87,7 +93,7 @@ export default function InscripcionWidget({ torneoId, torneoNombre, categorias }
             <button
               type="submit"
               disabled={guardando || !categoriaId}
-              className="rounded-lg bg-tg-green text-tg-bg text-xs font-semibold uppercase px-4 disabled:opacity-40"
+              className={`rounded-lg text-xs font-semibold uppercase px-4 disabled:opacity-40 ${boton}`}
             >
               {guardando ? "…" : "Inscribirme"}
             </button>

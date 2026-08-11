@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import RiderAvatar from "./RiderAvatar";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 export interface FilaRanking {
   corredorId: string;
@@ -32,9 +33,16 @@ const itemVariants = {
 };
 
 export default function RankingList({ filas, torneoId }: RankingListProps) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const surfaceMuted = enTorneo ? "bg-tg-surface/60 hover:bg-tg-surface" : "bg-plat-surface/60 hover:bg-plat-surface";
+  const accentText = enTorneo ? "text-tg-green" : "text-plat-celeste";
+
   if (filas.length === 0) {
     return (
-      <p className="text-center text-tg-text-dim text-sm py-10">
+      <p className={`text-center text-sm py-10 ${dim}`}>
         Todavía no hay corredores cargados en esta categoría.
       </p>
     );
@@ -50,27 +58,25 @@ export default function RankingList({ filas, torneoId }: RankingListProps) {
         const contenido = (
           <>
             {podio && <div className="absolute left-0 top-0 bottom-0 w-1 tg-gradient-bar-animated" />}
-            <span className="font-display text-2xl w-8 text-center text-tg-text-dim shrink-0">{posicion}</span>
+            <span className={`font-display text-2xl w-8 text-center shrink-0 ${dim}`}>{posicion}</span>
             <RiderAvatar nombre={fila.nombre} fotoUrl={fila.fotoUrl} categoriaId={fila.categoriaSlug} size={44} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate flex items-center gap-2">
                 {fila.nombre}
                 {fila.esPrecarga && (
-                  <span className="text-[9px] uppercase tracking-widest text-tg-text-dim border border-tg-border rounded-full px-1.5 py-0.5">
+                  <span className={`text-[9px] uppercase tracking-widest border rounded-full px-1.5 py-0.5 ${dim} ${border}`}>
                     sin registrar
                   </span>
                 )}
               </p>
-              {fila.equipo && <p className="text-xs text-tg-text-dim truncate">{fila.equipo}</p>}
+              {fila.equipo && <p className={`text-xs truncate ${dim}`}>{fila.equipo}</p>}
             </div>
-            <p className="font-display text-tg-green text-xl shrink-0">{fila.totalPuntos}</p>
+            <p className={`font-display text-xl shrink-0 ${accentText}`}>{fila.totalPuntos}</p>
           </>
         );
 
-        const className = `flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-0.5 ${
-          podio
-            ? `border-tg-border bg-tg-surface relative overflow-hidden ${oro ? "tg-glow-podium" : ""}`
-            : "border-tg-border bg-tg-surface/60 hover:bg-tg-surface"
+        const className = `flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-0.5 ${border} ${
+          podio ? `${surface} relative overflow-hidden ${oro ? "tg-glow-podium" : ""}` : surfaceMuted
         }`;
 
         return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 import type { Database } from "@/lib/supabase/types";
 
 type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
@@ -17,6 +18,16 @@ function slugify(texto: string) {
 }
 
 export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const surfaceAlt = enTorneo ? "bg-tg-bg" : "bg-plat-surface-alt";
+  const boton = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
+  const disputadaStyle = enTorneo
+    ? "text-tg-green border-tg-green/40 bg-tg-green/10"
+    : "text-plat-celeste border-plat-celeste/40 bg-plat-celeste/10";
+
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [cargando, setCargando] = useState(true);
   const [expandidaId, setExpandidaId] = useState<string | null>(null);
@@ -113,13 +124,13 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
     await cargar();
   }
 
-  if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando carreras…</div>;
+  if (cargando) return <div className={`py-10 text-center text-sm ${dim}`}>Cargando carreras…</div>;
 
   return (
     <div className="flex flex-col gap-3">
       <button
         onClick={() => setCreando((v) => !v)}
-        className="rounded-lg border border-dashed border-tg-border text-tg-text-dim text-sm py-3"
+        className={`rounded-lg border border-dashed text-sm py-3 ${border} ${dim}`}
       >
         {creando ? "Cancelar" : "+ Nueva fecha"}
       </button>
@@ -131,19 +142,19 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             onSubmit={crearCarrera}
-            className="flex flex-col gap-3 rounded-xl border border-tg-border bg-tg-surface p-4 overflow-hidden"
+            className={`flex flex-col gap-3 rounded-xl border ${border} ${surface} p-4 overflow-hidden`}
           >
             <input
               value={nueva.nombre}
               onChange={(e) => setNueva({ ...nueva, nombre: e.target.value })}
               placeholder="Nombre del circuito"
-              className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+              className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
             />
             <input
               value={nueva.lugar}
               onChange={(e) => setNueva({ ...nueva, lugar: e.target.value })}
               placeholder="Lugar"
-              className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+              className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
             />
             <div className="grid grid-cols-2 gap-3">
               <input
@@ -151,17 +162,17 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
                 onChange={(e) => setNueva({ ...nueva, lat: e.target.value })}
                 placeholder="Latitud"
                 inputMode="decimal"
-                className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
               />
               <input
                 value={nueva.lng}
                 onChange={(e) => setNueva({ ...nueva, lng: e.target.value })}
                 placeholder="Longitud"
                 inputMode="decimal"
-                className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
               />
             </div>
-            <button type="submit" className="rounded-lg bg-tg-green text-tg-bg font-semibold uppercase text-sm py-2.5">
+            <button type="submit" className={`rounded-lg font-semibold uppercase text-sm py-2.5 ${boton}`}>
               Crear fecha
             </button>
           </motion.form>
@@ -174,20 +185,18 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
         const expandida = expandidaId === carrera.id;
         const activo = expandida && form ? form : carrera;
         return (
-          <div key={carrera.id} className="rounded-xl border border-tg-border bg-tg-surface overflow-hidden">
+          <div key={carrera.id} className={`rounded-xl border ${border} ${surface} overflow-hidden`}>
             <button onClick={() => abrir(carrera)} className="w-full flex items-center gap-3 p-4 text-left">
-              <span className="font-display text-xl text-tg-text-dim w-8 text-center shrink-0">
+              <span className={`font-display text-xl w-8 text-center shrink-0 ${dim}`}>
                 {carrera.numero}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{carrera.nombre}</p>
-                <p className="text-xs text-tg-text-dim truncate">{carrera.lugar}</p>
+                <p className={`text-xs truncate ${dim}`}>{carrera.lugar}</p>
               </div>
               <span
                 className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border ${
-                  carrera.estado === "disputada"
-                    ? "text-tg-green border-tg-green/40 bg-tg-green/10"
-                    : "text-tg-amber border-tg-amber/40 bg-tg-amber/10"
+                  carrera.estado === "disputada" ? disputadaStyle : "text-tg-amber border-tg-amber/40 bg-tg-amber/10"
                 }`}
               >
                 {carrera.estado === "disputada" ? "Disputada" : "Próxima"}
@@ -202,30 +211,30 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-4 pt-0 flex flex-col gap-3 border-t border-tg-border">
+                  <div className={`p-4 pt-0 flex flex-col gap-3 border-t ${border}`}>
                     <div className="grid grid-cols-2 gap-3 mt-3">
                       <label className="block col-span-2">
-                        <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">
+                        <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>
                           Circuito
                         </span>
                         <input
                           value={form.nombre}
                           onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                          className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                          className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
                         />
                       </label>
                       <label className="block col-span-2">
-                        <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">
+                        <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>
                           Lugar
                         </span>
                         <input
                           value={form.lugar}
                           onChange={(e) => setForm({ ...form, lugar: e.target.value })}
-                          className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                          className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
                         />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">
+                        <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>
                           Latitud
                         </span>
                         <input
@@ -233,11 +242,11 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
                           step="any"
                           value={form.lat}
                           onChange={(e) => setForm({ ...form, lat: Number(e.target.value) })}
-                          className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                          className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
                         />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">
+                        <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>
                           Longitud
                         </span>
                         <input
@@ -245,7 +254,7 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
                           step="any"
                           value={form.lng}
                           onChange={(e) => setForm({ ...form, lng: Number(e.target.value) })}
-                          className="w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 text-sm"
+                          className={`w-full rounded-lg border ${border} ${surfaceAlt} px-3 py-2 text-sm`}
                         />
                       </label>
                     </div>
@@ -257,7 +266,7 @@ export default function OrganizadorCarreras({ torneoId }: { torneoId: string }) 
                     <button
                       type="button"
                       onClick={guardar}
-                      className="rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-2.5 transition-transform active:scale-[0.98]"
+                      className={`rounded-lg font-semibold uppercase tracking-wide text-sm py-2.5 transition-transform active:scale-[0.98] ${boton}`}
                     >
                       {guardadaId === carrera.id ? "✓ Guardado" : "Guardar cambios"}
                     </button>

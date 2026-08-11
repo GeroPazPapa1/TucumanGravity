@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import RiderAvatar from "@/components/RiderAvatar";
 import { getCategoryAccent } from "@/components/categoryColors";
 import CategoryTabs from "@/components/CategoryTabs";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 
 interface Categoria {
   id: string;
@@ -39,6 +40,12 @@ const itemVariants = {
 };
 
 export default function CorredoresGrid({ torneoId, categorias, filtroActivo, corredores }: CorredoresGridProps) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const hoverBorder = enTorneo ? "hover:border-tg-green/50" : "hover:border-plat-celeste/50";
+
   return (
     <>
       <CategoryTabs
@@ -49,18 +56,18 @@ export default function CorredoresGrid({ torneoId, categorias, filtroActivo, cor
       />
 
       {corredores.length === 0 ? (
-        <p className="text-center text-tg-text-dim text-sm py-10">
+        <p className={`text-center text-sm py-10 ${dim}`}>
           Todavía no hay corredores registrados en esta categoría.
         </p>
       ) : (
         <motion.ul initial="hidden" animate="show" variants={listVariants} className="grid grid-cols-2 gap-3">
           {corredores.map((corredor) => {
-            const accent = getCategoryAccent(corredor.categoriaSlug ?? "");
+            const accent = getCategoryAccent(corredor.categoriaSlug ?? "", !enTorneo);
             return (
               <motion.li key={corredor.id} variants={itemVariants}>
                 <Link
                   href={`/t/${torneoId}/corredores/${corredor.id}`}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-tg-border bg-tg-surface p-4 text-center transition-all hover:border-tg-green/50 hover:-translate-y-0.5 h-full"
+                  className={`flex flex-col items-center gap-2 rounded-xl border ${border} ${surface} p-4 text-center transition-all ${hoverBorder} hover:-translate-y-0.5 h-full`}
                 >
                   <RiderAvatar nombre={corredor.nombre} fotoUrl={corredor.fotoUrl} categoriaId={corredor.categoriaSlug ?? ""} size={64} />
                   <p className="font-semibold text-sm leading-tight">{corredor.nombre}</p>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { useEnTorneo } from "@/lib/useEnTorneo";
 import type { Database } from "@/lib/supabase/types";
 
 type Carrera = Database["public"]["Tables"]["carreras"]["Row"];
@@ -46,6 +47,16 @@ function CargaResultadosForm({
   resultadosCategoria,
   onGuardado,
 }: CargaResultadosFormProps) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+  const surfaceAlt = enTorneo ? "bg-tg-bg" : "bg-plat-surface-alt";
+  const divide = enTorneo ? "divide-tg-border" : "divide-plat-border";
+  const accentText = enTorneo ? "text-tg-green" : "text-plat-celeste";
+  const accentCheckbox = enTorneo ? "accent-tg-green" : "accent-plat-celeste";
+  const boton = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
+
   const [filas, setFilas] = useState<Record<string, FilaForm>>(() =>
     filasIniciales(corredoresCategoria, carreraId, resultadosCategoria)
   );
@@ -123,7 +134,7 @@ function CargaResultadosForm({
 
   if (corredoresCategoria.length === 0) {
     return (
-      <p className="text-center text-sm text-tg-text-dim py-10">
+      <p className={`text-center text-sm py-10 ${dim}`}>
         Todavía no hay corredores inscriptos en esta categoría. Necesitás que se registren y elijan su categoría
         en este torneo antes de poder cargarles resultados.
       </p>
@@ -132,8 +143,8 @@ function CargaResultadosForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
-        <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-tg-text-dim">
+      <div className={`rounded-xl border ${border} ${surface} divide-y ${divide}`}>
+        <div className={`grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest ${dim}`}>
           <span>Corredor</span>
           <span className="text-center">Pos.</span>
           <span className="text-center">Puntos</span>
@@ -148,7 +159,7 @@ function CargaResultadosForm({
               onChange={(e) =>
                 setFilas((f) => ({ ...f, [c.id]: { ...f[c.id], posicion: Number(e.target.value) || 0 } }))
               }
-              className="w-full rounded-md border border-tg-border bg-tg-bg px-2 py-1.5 text-sm text-center"
+              className={`w-full rounded-md border ${border} ${surfaceAlt} px-2 py-1.5 text-sm text-center`}
             />
             <input
               type="number"
@@ -157,42 +168,42 @@ function CargaResultadosForm({
               onChange={(e) =>
                 setFilas((f) => ({ ...f, [c.id]: { ...f[c.id], puntos: Number(e.target.value) || 0 } }))
               }
-              className="w-full rounded-md border border-tg-border bg-tg-bg px-2 py-1.5 text-sm text-center"
+              className={`w-full rounded-md border ${border} ${surfaceAlt} px-2 py-1.5 text-sm text-center`}
             />
           </div>
         ))}
       </div>
 
       <div>
-        <p className="text-[11px] uppercase tracking-widest text-tg-text-dim mb-2">
+        <p className={`text-[11px] uppercase tracking-widest mb-2 ${dim}`}>
           Vista previa del ranking si confirmás
         </p>
-        <div className="rounded-xl border border-tg-border bg-tg-surface divide-y divide-tg-border">
+        <div className={`rounded-xl border ${border} ${surface} divide-y ${divide}`}>
           {rankingDespues.map((entrada, index) => {
             const antes = rankingAntes.findIndex((r) => r.id === entrada.id);
             const delta = antes - index;
             return (
               <div key={entrada.id} className="flex items-center gap-3 px-3 py-2">
-                <span className="font-display text-lg w-6 text-center text-tg-text-dim">{index + 1}</span>
+                <span className={`font-display text-lg w-6 text-center ${dim}`}>{index + 1}</span>
                 <span className="flex-1 text-sm truncate">{entrada.nombre}</span>
                 {delta !== 0 && (
-                  <span className={`text-xs font-semibold ${delta > 0 ? "text-tg-green" : "text-tg-magenta"}`}>
+                  <span className={`text-xs font-semibold ${delta > 0 ? accentText : "text-tg-magenta"}`}>
                     {delta > 0 ? `↑${delta}` : `↓${Math.abs(delta)}`}
                   </span>
                 )}
-                <span className="font-display text-tg-green text-base w-12 text-right">{entrada.total}</span>
+                <span className={`font-display text-base w-12 text-right ${accentText}`}>{entrada.total}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-tg-text-dim">
+      <label className={`flex items-center gap-2 text-sm ${dim}`}>
         <input
           type="checkbox"
           checked={marcarDisputada}
           onChange={(e) => setMarcarDisputada(e.target.checked)}
-          className="accent-tg-green w-4 h-4"
+          className={`w-4 h-4 ${accentCheckbox}`}
         />
         Marcar esta fecha como disputada al confirmar
       </label>
@@ -202,7 +213,7 @@ function CargaResultadosForm({
       <button
         onClick={confirmar}
         disabled={guardando}
-        className="rounded-lg bg-tg-green text-tg-bg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60"
+        className={`rounded-lg font-semibold uppercase tracking-wide text-sm py-3 transition-transform active:scale-[0.98] disabled:opacity-60 ${boton}`}
       >
         {guardando ? "Guardando…" : "Confirmar carga de resultados"}
       </button>
@@ -213,7 +224,7 @@ function CargaResultadosForm({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-center text-sm text-tg-green"
+            className={`text-center text-sm ${accentText}`}
           >
             ✓ Resultados cargados. El ranking ya está actualizado.
           </motion.p>
@@ -224,6 +235,11 @@ function CargaResultadosForm({
 }
 
 export default function OrganizadorResultados({ torneoId }: { torneoId: string }) {
+  const enTorneo = useEnTorneo();
+  const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
+  const border = enTorneo ? "border-tg-border" : "border-plat-border";
+  const surface = enTorneo ? "bg-tg-surface" : "bg-plat-surface";
+
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carreraId, setCarreraId] = useState("");
@@ -276,11 +292,11 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoriaId]);
 
-  if (cargando) return <div className="py-10 text-center text-sm text-tg-text-dim">Cargando…</div>;
+  if (cargando) return <div className={`py-10 text-center text-sm ${dim}`}>Cargando…</div>;
 
   if (carreras.length === 0 || categorias.length === 0) {
     return (
-      <p className="text-center text-sm text-tg-text-dim py-10">
+      <p className={`text-center text-sm py-10 ${dim}`}>
         Necesitás tener al menos una fecha y una categoría cargadas en este torneo antes de poder cargar
         resultados.
       </p>
@@ -291,11 +307,11 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
-          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Fecha</span>
+          <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>Fecha</span>
           <select
             value={carreraId}
             onChange={(e) => setCarreraId(e.target.value)}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className={`w-full rounded-lg border ${border} ${surface} px-3 py-2.5 text-sm`}
           >
             {carreras.map((c) => (
               <option key={c.id} value={c.id}>
@@ -305,11 +321,11 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
           </select>
         </label>
         <label className="block">
-          <span className="block text-[11px] uppercase tracking-widest text-tg-text-dim mb-1.5">Categoría</span>
+          <span className={`block text-[11px] uppercase tracking-widest mb-1.5 ${dim}`}>Categoría</span>
           <select
             value={categoriaId}
             onChange={(e) => setCategoriaId(e.target.value)}
-            className="w-full rounded-lg border border-tg-border bg-tg-surface px-3 py-2.5 text-sm"
+            className={`w-full rounded-lg border ${border} ${surface} px-3 py-2.5 text-sm`}
           >
             {categorias.map((c) => (
               <option key={c.id} value={c.id}>

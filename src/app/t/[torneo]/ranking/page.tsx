@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import CategoryTabs from "@/components/CategoryTabs";
 import RankingList from "@/components/RankingList";
+import TextDim from "@/components/TextDim";
 import { createClient } from "@/lib/supabase/server";
 
 interface RankingPageProps {
@@ -38,18 +39,18 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl tracking-wide">RANKING</h1>
-        <p className="text-tg-text-dim text-sm">
+        <TextDim className="text-sm">
           {torneo.nombre} · acumulado general por categoría. Se recalcula con cada fecha cargada.
-        </p>
+        </TextDim>
       </div>
 
       {categorias && categorias.length > 0 ? (
         <>
           <CategoryTabs categorias={categorias} activa={categoriaActiva} basePath={`/t/${torneoId}/ranking`} />
 
-          <p className="text-xs uppercase tracking-widest text-tg-text-dim">
+          <TextDim className="text-xs uppercase tracking-widest">
             {categoriaInfo?.nombre} · {filas?.length ?? 0} corredores
-          </p>
+          </TextDim>
 
           <RankingList
             torneoId={torneoId}
@@ -70,9 +71,9 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
           />
         </>
       ) : (
-        <p className="text-center text-tg-text-dim text-sm py-10">
+        <TextDim className="text-center text-sm py-10">
           Este torneo todavía no tiene categorías cargadas.
-        </p>
+        </TextDim>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CorredoresGrid from "@/components/CorredoresGrid";
+import TextDim from "@/components/TextDim";
 
 interface CorredoresPageProps {
   params: Promise<{ torneo: string }>;
@@ -51,9 +52,9 @@ export default async function CorredoresPage({ params, searchParams }: Corredore
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl tracking-wide">CORREDORES</h1>
-        <p className="text-tg-text-dim text-sm">
+        <TextDim className="text-sm">
           {corredores.length} corredores registrados en {torneo.nombre}.
-        </p>
+        </TextDim>
       </div>
 
       <CorredoresGrid torneoId={torneoId} categorias={categorias ?? []} filtroActivo={filtroActivo} corredores={lista} />
