@@ -20,10 +20,12 @@ export default function CarreraDetail({
   carrera,
   torneoId,
   grupos,
+  requiereFederado = false,
 }: {
   carrera: Carrera;
   torneoId: string;
   grupos: GrupoCategoria[];
+  requiereFederado?: boolean;
 }) {
   const enTorneo = useEnTorneo();
   const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
@@ -89,7 +91,7 @@ export default function CarreraDetail({
       </div>
 
       {grupos.length > 0 ? (
-        <ResultadosPorFecha grupos={grupos} />
+        <ResultadosPorFecha grupos={grupos} requiereFederado={requiereFederado} />
       ) : (
         <div className={`rounded-lg border p-4 text-sm ${border} ${surface} ${dim}`}>
           {carrera.estado === "disputada"

@@ -18,12 +18,10 @@ export async function generateMetadata({ params }: CarreraPageProps): Promise<Me
 export default async function CarreraDetailPage({ params }: CarreraPageProps) {
   const { torneo: torneoId, id } = await params;
   const supabase = await createClient();
-  const { data: carrera } = await supabase
-    .from("carreras")
-    .select("*")
-    .eq("id", id)
-    .eq("torneo_id", torneoId)
-    .single();
+  const [{ data: carrera }, { data: torneo }] = await Promise.all([
+    supabase.from("carreras").select("*").eq("id", id).eq("torneo_id", torneoId).single(),
+    supabase.from("torneos").select("requiere_federado").eq("id", torneoId).single(),
+  ]);
 
   if (!carrera) notFound();
 
@@ -40,7 +38,7 @@ export default async function CarreraDetailPage({ params }: CarreraPageProps) {
     const categoriaIds = [...new Set(resultados.map((r) => r.categoria_id))];
 
     const [{ data: perfiles }, { data: categorias }] = await Promise.all([
-      supabase.from("perfiles").select("id, nombre").in("id", corredorIds),
+      supabase.from("perfiles").select("id, nombre, federado").in("id", corredorIds),
       supabase.from("categorias").select("id, nombre, orden").in("id", categoriaIds),
     ]);
 
@@ -57,11 +55,14 @@ export default async function CarreraDetailPage({ params }: CarreraPageProps) {
             nombre: perfiles?.find((p) => p.id === r.corredor_id)?.nombre ?? "Corredor",
             posicion: r.posicion,
             puntos: r.puntos,
+            federado: perfiles?.find((p) => p.id === r.corredor_id)?.federado ?? true,
           }))
           .sort((a, b) => a.posicion - b.posicion),
       }))
       .filter((g) => g.filas.length > 0);
   }
 
-  return <CarreraDetail carrera={carrera} torneoId={torneoId} grupos={grupos} />;
+  return (
+    <CarreraDetail carrera={carrera} torneoId={torneoId} grupos={grupos} requiereFederado={torneo?.requiere_federado ?? false} />
+  );
 }

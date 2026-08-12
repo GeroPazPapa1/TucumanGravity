@@ -14,8 +14,15 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
   const { categoria } = await searchParams;
   const supabase = await createClient();
 
-  const { data: torneo } = await supabase.from("torneos").select("id, nombre").eq("id", torneoId).single();
+  const { data: torneo } = await supabase
+    .from("torneos")
+    .select("id, nombre, descartes_permitidos, presentismo_puntos_por_fecha, requiere_federado, suma_fecha_regional")
+    .eq("id", torneoId)
+    .single();
   if (!torneo) notFound();
+
+  const reglasActivas =
+    torneo.descartes_permitidos > 0 || torneo.presentismo_puntos_por_fecha > 0 || torneo.suma_fecha_regional;
 
   const { data: categorias } = await supabase
     .from("categorias")
@@ -52,8 +59,19 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
             {categoriaInfo?.nombre} · {filas?.length ?? 0} corredores
           </TextDim>
 
+          {reglasActivas && (
+            <TextDim className="text-xs -mt-2 leading-relaxed">
+              Este torneo tiene reglas propias de puntaje:
+              {torneo.descartes_permitidos > 0 && " se descarta la peor fecha ·"}
+              {torneo.presentismo_puntos_por_fecha > 0 && ` +${torneo.presentismo_puntos_por_fecha} pts de presentismo por fecha corrida ·`}
+              {torneo.requiere_federado && " solo suman los corredores federados ·"}
+              {torneo.suma_fecha_regional && " suma bono por posición en tu regional"}
+            </TextDim>
+          )}
+
           <RankingList
             torneoId={torneoId}
+            reglasActivas={reglasActivas}
             filas={(filas ?? []).map((f) => {
               const cat = categorias.find((c) => c.id === f.categoria_id);
               return {
@@ -66,6 +84,10 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
                 categoriaSlug: cat?.slug ?? "",
                 totalPuntos: f.total_puntos,
                 esPrecarga: f.es_precarga,
+                cantFechas: f.cant_fechas,
+                puntosDescartados: f.puntos_descartados,
+                puntosPresentismo: f.puntos_presentismo,
+                puntosRegionalBonus: f.puntos_regional_bonus,
               };
             })}
           />

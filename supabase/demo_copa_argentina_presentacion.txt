@@ -1,0 +1,135 @@
+====================================================================
+COPA ARGENTINA — CÓMO FUNCIONA EL SISTEMA DE PUNTOS (machete para la demo)
+====================================================================
+
+Antes de correr el script: supabase/demo_copa_argentina.sql (una sola vez
+en el SQL Editor de Supabase). Después andá a:
+  https://tu-dominio-vercel.app/t/copa-argentina/ranking  (categoría Elite)
+y vas a ver EXACTAMENTE los números de abajo, calculados en vivo por la
+base de datos — no están hardcodeados en ningún lado.
+
+Reglas activas en Copa Argentina (las otras copas/regionales NO las
+tienen, sólo suman puntos derecho):
+  1. Se descarta la peor fecha de cada corredor.
+  2. Bono de presentismo: +20 puntos por cada fecha que corriste.
+  3. Solo suman puntos oficiales los corredores federados (licencia
+     FACiMo). Si no estás federado, corrés igual, pero no puntuás.
+  4. Bono de fecha regional: tu posición en TU regional (Tucumán,
+     Córdoba, Mendoza o Patagonia) se traduce a puntos extra acá.
+
+--------------------------------------------------------------------
+RANKING FINAL (Elite) — así queda ordenado:
+--------------------------------------------------------------------
+  1°  Rocío Ferreyra     890 pts
+  2°  Manuel Ibarra       800 pts
+  3°  Elián Sosa          570 pts
+  4°  Camila Roldán       550 pts
+      Bruno Castex        NO APARECE (no federado)
+
+--------------------------------------------------------------------
+CASO 1 — Manuel Ibarra: "el corredor parejo" (caso base)
+--------------------------------------------------------------------
+Corrió las 4 fechas, sin días malos: 250 / 220 / 240 / 230.
+
+  Suma de las 4 fechas ................. 940
+  Se descarta la peor (Fecha 2, 220) ... -220  → 720
+  Presentismo (20 x 4 fechas corridas) . +80
+  ------------------------------------------------
+  TOTAL ................................ 800
+
+Qué decir: "Manuel es el corredor más regular, nunca tuvo una fecha
+mala. Pero justamente por eso el descarte no le regala mucho: su peor
+fecha (220) todavía era una fecha decente, así que perder esos puntos
+le pesa."
+
+--------------------------------------------------------------------
+CASO 2 — Rocío Ferreyra: "el descarte perdona el desastre"
+--------------------------------------------------------------------
+Ganó 3 de las 4 fechas (280/260/270), pero en la Fecha 3 se cayó y
+sacó solo 30 puntos.
+
+  Suma de las 4 fechas ................. 840
+  Se descarta la peor (Fecha 3, 30) .... -30  → 810
+  Presentismo (20 x 4 fechas corridas) . +80
+  ------------------------------------------------
+  TOTAL ................................ 890  ← 1° puesto
+
+Qué decir: "Acá está la magia del descarte. Rocío tuvo una caída fea
+en la Fecha 3 y sacó apenas 30 puntos — pero como el reglamento
+permite descartar 1 fecha, esos 30 puntos casi no le cuestan nada
+(se los resta, pero eran pocos). En cambio a Manuel, que nunca tuvo
+un desastre, el descarte le come 220 puntos de su peor fecha. Por
+eso Rocío termina primera aunque tuvo una fecha catastrófica: el
+descarte protege más a quien tiene UN mal día que a quien es parejo
+pero nunca brillante."
+
+--------------------------------------------------------------------
+CASO 3 — Bruno Castex: "el mejor corredor... que no puntúa"
+--------------------------------------------------------------------
+Ganó 3 de las 4 fechas y salió 2° en la otra (300/300/300/280) — el
+mejor rendimiento en pista de toda la temporada, mejor que Rocío y
+Manuel juntos.
+
+  Si estuviera federado, su total sería: 980 (el más alto de todos)
+  Pero Bruno NO tiene licencia FACiMo (federado = false)
+  ------------------------------------------------
+  TOTAL EN EL RANKING OFICIAL ........... no aparece
+
+Qué decir: "Bruno fue, en pista, el corredor más rápido de la
+temporada. Pero la Copa Argentina exige estar federado para sumar
+puntos oficiales — es una regla real del reglamento UCI/FACiMo, no
+un capricho nuestro. El sistema lo respeta a rajatabla: Bruno corre,
+compite, aparece en los resultados de cada fecha... pero no figura
+en el ranking general hasta que se federe."
+
+--------------------------------------------------------------------
+CASO 4 — Elián Sosa: "el precio de faltar a una fecha"
+--------------------------------------------------------------------
+Corrió 3 de las 4 fechas (se perdió la Fecha 2): 260/240/250.
+
+  Suma de las 3 fechas corridas ......... 750
+  Se descarta la peor (240) ............. -240  → 510
+  Presentismo (20 x 3 fechas, no 4) ..... +60
+  ------------------------------------------------
+  TOTAL .................................. 570
+
+Qué decir: "Elián corrió bien las 3 fechas que corrió — su promedio
+por fecha es parecido al de Manuel. Pero le faltan dos cosas: los
+20 puntos de presentismo de la fecha que no corrió, y el descarte
+le pesa proporcionalmente más porque tiene menos fechas para repartir
+el golpe. Faltar a una fecha te cuesta más de lo que parece."
+
+--------------------------------------------------------------------
+CASO 5 — Camila Roldán: "el bono por tu regional"
+--------------------------------------------------------------------
+Corrió solo 2 fechas de la Copa Argentina directamente (260/240), pero
+también corre el Regional Córdoba, donde salió 2da.
+
+  Suma de sus 2 fechas de Copa .......... 500
+  Se descarta la peor (240) ............. -240  → 260
+  Presentismo (20 x 2 fechas) ........... +40
+  Subtotal Copa Argentina "pura" ........ 300
+  Bono por salir 2da en Regional Córdoba  +250
+  ------------------------------------------------
+  TOTAL .................................. 550
+
+Qué decir: "Camila no corre todas las fechas nacionales — vive más
+enfocada en su regional. Pero como salió 2da en el Regional Córdoba,
+ese resultado se traduce automáticamente a puntos en la Copa
+Argentina (la tabla de equivalencias la carga el organizador nacional).
+Así el sistema conecta las cuatro copas regionales con la Copa
+Argentina sin que nadie tenga que cargar nada dos veces: corrés tu
+regional, y si te va bien, suma también arriba."
+
+--------------------------------------------------------------------
+UN DETALLE TÉCNICO HONESTO (por si preguntan)
+--------------------------------------------------------------------
+El descarte de la peor fecha se aplica SIEMPRE que el corredor tenga
+al menos 1 resultado cargado (no exige haber corrido un mínimo de
+fechas). Es decir: si alguien corre una sola fecha en toda la Copa,
+esa fecha se le "descarta" a sí misma y le queda 0 puntos de carrera
+(solo le suma el presentismo de esa fecha). Es una decisión de diseño
+razonable — nunca contamos tu único mal día en tu contra dos veces —
+pero vale la pena decidir juntos si quieren un piso mínimo de fechas
+antes de que el descarte se active (por ejemplo, recién a partir de
+la 2da fecha corrida). Lo puedo ajustar en un minuto si lo prefieren así.

@@ -15,11 +15,16 @@ export interface FilaRanking {
   categoriaSlug: string;
   totalPuntos: number;
   esPrecarga: boolean;
+  cantFechas?: number;
+  puntosDescartados?: number;
+  puntosPresentismo?: number;
+  puntosRegionalBonus?: number;
 }
 
 interface RankingListProps {
   filas: FilaRanking[];
   torneoId: string;
+  reglasActivas?: boolean;
 }
 
 const listVariants = {
@@ -32,7 +37,7 @@ const itemVariants = {
   show: { opacity: 1, x: 0 },
 };
 
-export default function RankingList({ filas, torneoId }: RankingListProps) {
+export default function RankingList({ filas, torneoId, reglasActivas = false }: RankingListProps) {
   const enTorneo = useEnTorneo();
   const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
   const border = enTorneo ? "border-tg-border" : "border-plat-border";
@@ -55,6 +60,16 @@ export default function RankingList({ filas, torneoId }: RankingListProps) {
         const podio = posicion <= 3;
         const oro = posicion === 1;
 
+        const detalles: string[] = [];
+        if (reglasActivas && !fila.esPrecarga) {
+          if (fila.cantFechas !== undefined) {
+            detalles.push(`${fila.cantFechas} fecha${fila.cantFechas === 1 ? "" : "s"} corrida${fila.cantFechas === 1 ? "" : "s"}`);
+          }
+          if (fila.puntosPresentismo) detalles.push(`+${fila.puntosPresentismo} presentismo`);
+          if (fila.puntosDescartados) detalles.push(`-${fila.puntosDescartados} descarte`);
+          if (fila.puntosRegionalBonus) detalles.push(`+${fila.puntosRegionalBonus} bono regional`);
+        }
+
         const contenido = (
           <>
             {podio && <div className="absolute left-0 top-0 bottom-0 w-1 tg-gradient-bar-animated" />}
@@ -70,6 +85,9 @@ export default function RankingList({ filas, torneoId }: RankingListProps) {
                 )}
               </p>
               {fila.equipo && <p className={`text-xs truncate ${dim}`}>{fila.equipo}</p>}
+              {detalles.length > 0 && (
+                <p className={`text-[10px] truncate ${dim}`}>{detalles.join(" · ")}</p>
+              )}
             </div>
             <p className={`font-display text-xl shrink-0 ${accentText}`}>{fila.totalPuntos}</p>
           </>

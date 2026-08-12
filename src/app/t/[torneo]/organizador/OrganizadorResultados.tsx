@@ -14,6 +14,14 @@ interface CorredorInscripto {
   id: string;
   nombre: string;
   puntosIniciales: number;
+  federado: boolean;
+}
+
+interface ReglasTorneo {
+  descartesPermitidos: number;
+  presentismoPuntosPorFecha: number;
+  requiereFederado: boolean;
+  sumaFechaRegional: boolean;
 }
 
 interface FilaForm {
@@ -37,6 +45,7 @@ interface CargaResultadosFormProps {
   categoriaId: string;
   corredoresCategoria: CorredorInscripto[];
   resultadosCategoria: Resultado[];
+  reglas: ReglasTorneo;
   onGuardado: () => void;
 }
 
@@ -45,6 +54,7 @@ function CargaResultadosForm({
   categoriaId,
   corredoresCategoria,
   resultadosCategoria,
+  reglas,
   onGuardado,
 }: CargaResultadosFormProps) {
   const enTorneo = useEnTorneo();
@@ -57,6 +67,9 @@ function CargaResultadosForm({
   const accentCheckbox = enTorneo ? "accent-tg-green" : "accent-plat-celeste";
   const boton = enTorneo ? "bg-tg-green text-tg-bg" : "bg-plat-celeste text-white";
 
+  const reglasActivas =
+    reglas.descartesPermitidos > 0 || reglas.presentismoPuntosPorFecha > 0 || reglas.sumaFechaRegional;
+
   const [filas, setFilas] = useState<Record<string, FilaForm>>(() =>
     filasIniciales(corredoresCategoria, carreraId, resultadosCategoria)
   );
@@ -65,26 +78,38 @@ function CargaResultadosForm({
   const [confirmado, setConfirmado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Aplica descarte de la peor fecha + bono de presentismo a una lista de
+  // puntos por fecha de un corredor. El bono por posición regional NO se
+  // calcula acá (requiere consultar otro torneo) — se aclara en la UI.
+  function totalConReglas(corredorId: string, puntosPorFecha: number[]): number | null {
+    const corredor = corredoresCategoria.find((c) => c.id === corredorId);
+    if (!corredor) return null;
+    if (reglas.requiereFederado && !corredor.federado) return null;
+
+    const suma = puntosPorFecha.reduce((s, v) => s + v, 0);
+    const cantFechas = puntosPorFecha.length;
+    const peor = reglas.descartesPermitidos >= 1 && cantFechas > 0 ? Math.min(...puntosPorFecha) : 0;
+    const presentismo = reglas.presentismoPuntosPorFecha * cantFechas;
+    return corredor.puntosIniciales + suma - peor + presentismo;
+  }
+
   function totalActual(corredorId: string) {
-    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntosIniciales ?? 0;
-    const suma = resultadosCategoria
-      .filter((r) => r.corredor_id === corredorId)
-      .reduce((s, r) => s + r.puntos, 0);
-    return base + suma;
+    const puntos = resultadosCategoria.filter((r) => r.corredor_id === corredorId).map((r) => r.puntos);
+    return totalConReglas(corredorId, puntos);
   }
 
   function totalConPendientes(corredorId: string) {
-    const base = corredoresCategoria.find((c) => c.id === corredorId)?.puntosIniciales ?? 0;
-    const sumaOtrasCarreras = resultadosCategoria
+    const otras = resultadosCategoria
       .filter((r) => r.corredor_id === corredorId && r.carrera_id !== carreraId)
-      .reduce((s, r) => s + r.puntos, 0);
-    return base + sumaOtrasCarreras + (filas[corredorId]?.puntos ?? 0);
+      .map((r) => r.puntos);
+    return totalConReglas(corredorId, [...otras, filas[corredorId]?.puntos ?? 0]);
   }
 
   const rankingAntes = useMemo(
     () =>
       corredoresCategoria
         .map((c) => ({ id: c.id, nombre: c.nombre, total: totalActual(c.id) }))
+        .filter((r): r is { id: string; nombre: string; total: number } => r.total !== null)
         .sort((a, b) => b.total - a.total),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [corredoresCategoria, resultadosCategoria]
@@ -94,10 +119,13 @@ function CargaResultadosForm({
     () =>
       corredoresCategoria
         .map((c) => ({ id: c.id, nombre: c.nombre, total: totalConPendientes(c.id) }))
+        .filter((r): r is { id: string; nombre: string; total: number } => r.total !== null)
         .sort((a, b) => b.total - a.total),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [corredoresCategoria, resultadosCategoria, filas]
   );
+
+  const noFederados = reglas.requiereFederado ? corredoresCategoria.filter((c) => !c.federado) : [];
 
   async function confirmar() {
     setGuardando(true);
@@ -143,6 +171,22 @@ function CargaResultadosForm({
 
   return (
     <div className="flex flex-col gap-4">
+      {reglasActivas && (
+        <p className={`text-xs leading-relaxed rounded-lg border px-3 py-2.5 ${border} ${surface} ${dim}`}>
+          Este torneo tiene reglas propias:
+          {reglas.descartesPermitidos > 0 && " se descarta la peor fecha de cada corredor ·"}
+          {reglas.presentismoPuntosPorFecha > 0 && ` +${reglas.presentismoPuntosPorFecha} pts de presentismo por fecha corrida ·`}
+          {reglas.requiereFederado && " solo suman los federados ·"}
+          {reglas.sumaFechaRegional && " suma bono por posición regional"}
+          {reglas.sumaFechaRegional && (
+            <span className="block mt-1">
+              ⚠ El bono por posición regional no está incluido en esta vista previa (se calcula al confirmar,
+              mirá el ranking público para verlo reflejado).
+            </span>
+          )}
+        </p>
+      )}
+
       <div className={`rounded-xl border ${border} ${surface} divide-y ${divide}`}>
         <div className={`grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest ${dim}`}>
           <span>Corredor</span>
@@ -151,7 +195,14 @@ function CargaResultadosForm({
         </div>
         {corredoresCategoria.map((c) => (
           <div key={c.id} className="grid grid-cols-[1fr_70px_70px] gap-2 px-3 py-2 items-center">
-            <span className="text-sm truncate">{c.nombre}</span>
+            <span className="text-sm truncate flex items-center gap-1.5 min-w-0">
+              <span className="truncate">{c.nombre}</span>
+              {reglas.requiereFederado && !c.federado && (
+                <span className="shrink-0 text-[9px] uppercase tracking-widest text-tg-magenta border border-tg-magenta/40 rounded-full px-1.5 py-0.5">
+                  no federado
+                </span>
+              )}
+            </span>
             <input
               type="number"
               min={1}
@@ -196,6 +247,11 @@ function CargaResultadosForm({
             );
           })}
         </div>
+        {noFederados.length > 0 && (
+          <p className={`text-xs mt-2 ${dim}`}>
+            No suman en este ranking por no estar federados: {noFederados.map((c) => c.nombre).join(", ")}.
+          </p>
+        )}
       </div>
 
       <label className={`flex items-center gap-2 text-sm ${dim}`}>
@@ -242,6 +298,12 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
 
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [reglas, setReglas] = useState<ReglasTorneo>({
+    descartesPermitidos: 0,
+    presentismoPuntosPorFecha: 0,
+    requiereFederado: false,
+    sumaFechaRegional: false,
+  });
   const [carreraId, setCarreraId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [corredoresCategoria, setCorredoresCategoria] = useState<CorredorInscripto[]>([]);
@@ -252,12 +314,25 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
     (async () => {
       setCargando(true);
       const supabase = createClient();
-      const [{ data: c }, { data: cat }] = await Promise.all([
+      const [{ data: c }, { data: cat }, { data: t }] = await Promise.all([
         supabase.from("carreras").select("*").eq("torneo_id", torneoId).order("numero"),
         supabase.from("categorias").select("*").eq("torneo_id", torneoId).order("orden"),
+        supabase
+          .from("torneos")
+          .select("descartes_permitidos, presentismo_puntos_por_fecha, requiere_federado, suma_fecha_regional")
+          .eq("id", torneoId)
+          .single(),
       ]);
       setCarreras(c ?? []);
       setCategorias(cat ?? []);
+      if (t) {
+        setReglas({
+          descartesPermitidos: t.descartes_permitidos,
+          presentismoPuntosPorFecha: t.presentismo_puntos_por_fecha,
+          requiereFederado: t.requiere_federado,
+          sumaFechaRegional: t.suma_fecha_regional,
+        });
+      }
       setCarreraId(c?.[0]?.id ?? "");
       setCategoriaId(cat?.[0]?.id ?? "");
       setCargando(false);
@@ -273,12 +348,13 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
 
     const perfilIds = (inscripciones ?? []).map((i) => i.perfil_id);
     const { data: perfilesData } = perfilIds.length
-      ? await supabase.from("perfiles").select("id, nombre").in("id", perfilIds).order("nombre")
+      ? await supabase.from("perfiles").select("id, nombre, federado").in("id", perfilIds).order("nombre")
       : { data: [] };
 
     const corredores: CorredorInscripto[] = (perfilesData ?? []).map((p) => ({
       id: p.id,
       nombre: p.nombre,
+      federado: p.federado,
       puntosIniciales: (inscripciones ?? []).find((i) => i.perfil_id === p.id)?.puntos_iniciales ?? 0,
     }));
 
@@ -342,6 +418,7 @@ export default function OrganizadorResultados({ torneoId }: { torneoId: string }
         categoriaId={categoriaId}
         corredoresCategoria={corredoresCategoria}
         resultadosCategoria={resultadosCategoria}
+        reglas={reglas}
         onGuardado={() => cargarDatosCategoria(categoriaId)}
       />
     </div>

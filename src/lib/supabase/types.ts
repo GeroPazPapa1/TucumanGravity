@@ -268,6 +268,16 @@ export interface Database {
           puntos_base: number;
           total_puntos: number;
           es_precarga: boolean;
+          federado: boolean | null;
+          cant_fechas: number;
+          puntos_suma: number;
+          puntos_descartados: number;
+          puntos_presentismo: number;
+          puntos_regional_bonus: number;
+          requiere_federado: boolean;
+          descartes_permitidos: number;
+          presentismo_puntos_por_fecha: number;
+          suma_fecha_regional: boolean;
         };
         Relationships: [];
       };

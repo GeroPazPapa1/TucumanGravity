@@ -8,6 +8,7 @@ export interface ResultadoFila {
   nombre: string;
   posicion: number;
   puntos: number;
+  federado?: boolean;
 }
 
 export interface GrupoCategoria {
@@ -26,7 +27,7 @@ const itemVariants = {
   show: { opacity: 1, x: 0 },
 };
 
-export default function ResultadosPorFecha({ grupos }: { grupos: GrupoCategoria[] }) {
+export default function ResultadosPorFecha({ grupos, requiereFederado = false }: { grupos: GrupoCategoria[]; requiereFederado?: boolean }) {
   const enTorneo = useEnTorneo();
   const dim = enTorneo ? "text-tg-text-dim" : "text-plat-text-dim";
   const border = enTorneo ? "border-tg-border" : "border-plat-border";
@@ -55,7 +56,14 @@ export default function ResultadosPorFecha({ grupos }: { grupos: GrupoCategoria[
                 <span className={`font-display text-lg w-7 text-center shrink-0 ${dim}`}>
                   {fila.posicion}
                 </span>
-                <span className="flex-1 text-sm font-semibold truncate">{fila.nombre}</span>
+                <span className="flex-1 text-sm font-semibold truncate flex items-center gap-1.5 min-w-0">
+                  <span className="truncate">{fila.nombre}</span>
+                  {requiereFederado && fila.federado === false && (
+                    <span className="shrink-0 text-[9px] uppercase tracking-widest text-tg-magenta border border-tg-magenta/40 rounded-full px-1.5 py-0.5">
+                      no federado
+                    </span>
+                  )}
+                </span>
                 <span className={`font-display text-base shrink-0 ${accentText}`}>{fila.puntos} pts</span>
               </motion.li>
             ))}

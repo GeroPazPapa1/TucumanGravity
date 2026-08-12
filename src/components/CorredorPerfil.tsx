@@ -18,6 +18,14 @@ interface CorredorPerfilProps {
   categoriaSlug: string | null;
   posicion: number | null;
   totalPuntos: number | null;
+  federado?: boolean;
+  requiereFederado?: boolean;
+  reglasActivas?: boolean;
+  cantFechas?: number | null;
+  puntosSuma?: number | null;
+  puntosDescartados?: number | null;
+  puntosPresentismo?: number | null;
+  puntosRegionalBonus?: number | null;
 }
 
 export default function CorredorPerfil({
@@ -32,6 +40,14 @@ export default function CorredorPerfil({
   categoriaSlug,
   posicion,
   totalPuntos,
+  federado,
+  requiereFederado,
+  reglasActivas,
+  cantFechas,
+  puntosSuma,
+  puntosDescartados,
+  puntosPresentismo,
+  puntosRegionalBonus,
 }: CorredorPerfilProps) {
   const enTorneo = useEnTorneo();
   const accent = getCategoryAccent(categoriaSlug ?? "", !enTorneo);
@@ -46,6 +62,18 @@ export default function CorredorPerfil({
   if (bici) datos.push({ label: "Bici", value: bici });
   if (equipo) datos.push({ label: "Equipo", value: equipo });
 
+  const mostrarBadgeFederado = requiereFederado;
+  const excluidoPorFederado = requiereFederado && !federado && categoriaNombre && posicion === null;
+
+  const desglose: { label: string; value: string }[] = [];
+  if (reglasActivas && posicion !== null) {
+    if (cantFechas != null) desglose.push({ label: "Fechas corridas", value: String(cantFechas) });
+    if (puntosSuma != null) desglose.push({ label: "Puntos en pista", value: String(puntosSuma) });
+    if (puntosDescartados) desglose.push({ label: "Descarte de la peor fecha", value: `-${puntosDescartados}` });
+    if (puntosPresentismo) desglose.push({ label: "Bono de presentismo", value: `+${puntosPresentismo}` });
+    if (puntosRegionalBonus) desglose.push({ label: "Bono por tu regional", value: `+${puntosRegionalBonus}` });
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
       <Link href={`/t/${torneoId}/corredores`} className={`text-xs uppercase tracking-wide ${dim} ${hoverAccent}`}>
@@ -57,15 +85,35 @@ export default function CorredorPerfil({
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}>
           <RiderAvatar nombre={nombre} fotoUrl={fotoUrl} categoriaId={categoriaSlug ?? ""} size={128} />
         </motion.div>
-        <div>
+        <div className="flex flex-col items-center gap-1.5">
           <h1 className="font-display text-2xl tracking-wide">{nombre}</h1>
-          {categoriaNombre && (
-            <span className={`inline-block mt-1 text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${accent.border} ${accent.bg} ${accent.text}`}>
-              {categoriaNombre}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {categoriaNombre && (
+              <span className={`inline-block text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${accent.border} ${accent.bg} ${accent.text}`}>
+                {categoriaNombre}
+              </span>
+            )}
+            {mostrarBadgeFederado && (
+              <span
+                className={`inline-block text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${
+                  federado
+                    ? "text-tg-cyan border-tg-cyan/40 bg-tg-cyan/10"
+                    : "text-tg-magenta border-tg-magenta/40 bg-tg-magenta/10"
+                }`}
+              >
+                {federado ? "Federado" : "No federado"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
+      {excluidoPorFederado && (
+        <p className={`text-center text-sm px-4 rounded-lg border py-3 ${border} ${surface}`}>
+          Este torneo exige estar federado para sumar puntos oficiales. {nombre} corre y aparece en los
+          resultados de cada fecha, pero no figura en el ranking general hasta federarse.
+        </p>
+      )}
 
       {posicion !== null && totalPuntos !== null && (
         <div className="grid grid-cols-2 gap-3">
@@ -76,6 +124,20 @@ export default function CorredorPerfil({
           <div className={`rounded-xl border ${border} ${surface} p-4 text-center`}>
             <p className={`font-display text-3xl ${accentText}`}>{totalPuntos}</p>
             <p className={`text-[11px] uppercase tracking-widest mt-1 ${dim}`}>puntos acumulados</p>
+          </div>
+        </div>
+      )}
+
+      {desglose.length > 0 && (
+        <div>
+          <p className={`text-[11px] uppercase tracking-widest mb-2 ${dim}`}>Cómo se compone el puntaje</p>
+          <div className={`rounded-xl border ${border} ${surface} divide-y ${enTorneo ? "divide-tg-border" : "divide-plat-border"}`}>
+            {desglose.map((d) => (
+              <div key={d.label} className="flex items-center justify-between px-4 py-3">
+                <span className={`text-xs uppercase tracking-widest ${dim}`}>{d.label}</span>
+                <span className="font-semibold">{d.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
