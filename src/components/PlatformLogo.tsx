@@ -1,14 +1,33 @@
+"use client";
+
+import { usePlataformaConfig } from "@/components/PlataformaConfigProvider";
+
 interface PlatformLogoProps {
   size?: number;
   className?: string;
 }
 
 /**
- * Ícono de la plataforma (Downhill App): silueta de un corredor de DH en
- * posición de ataque, en placa circular oscura. Distinto del escudo de
+ * Ícono de la plataforma (Downhill App). Si el super admin subió un logo
+ * propio desde el panel de admin, se usa ese. Si no, cae en la silueta de
+ * corredor DH dibujada a mano (el diseño original). Distinto del escudo de
  * Tucumán Gravity — ese queda reservado para adentro de ese torneo puntual.
  */
 export default function PlatformLogo({ size = 64, className = "" }: PlatformLogoProps) {
+  const { logoUrl } = usePlataformaConfig();
+
+  if (logoUrl) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-full overflow-hidden shrink-0 bg-tg-bg ${className}`}
+        style={{ width: size, height: size }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- el logo viene de Supabase Storage (dominio dinámico por proyecto) */}
+        <img src={logoUrl} alt="Downhill App" className="w-full h-full object-cover" />
+      </span>
+    );
+  }
+
   const gradientId = "downhill-app-gradient";
 
   return (

@@ -253,6 +253,12 @@ export interface Database {
         Update: Partial<{ puntos: number }>;
         Relationships: [];
       };
+      plataforma_config: {
+        Row: { id: number; logo_url: string | null; updated_at: string };
+        Insert: { id?: number; logo_url?: string | null };
+        Update: Partial<{ logo_url: string | null }>;
+        Relationships: [];
+      };
     };
     Views: {
       ranking_general: {

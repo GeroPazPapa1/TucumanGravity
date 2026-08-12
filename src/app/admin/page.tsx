@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import RoleGate from "@/components/RoleGate";
-import Logo from "@/components/Logo";
+import PlatformLogo from "@/components/PlatformLogo";
+import { usePlataformaConfig } from "@/components/PlataformaConfigProvider";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Rol } from "@/lib/supabase/types";
 
@@ -199,13 +200,7 @@ function PanelSuperAdmin() {
 
       <section>
         <h2 className="text-[11px] uppercase tracking-widest text-plat-text-dim mb-2">Identidad visual</h2>
-        <div className="rounded-xl border border-plat-border bg-plat-surface p-4 flex items-center gap-4">
-          <Logo size={56} />
-          <div className="flex-1">
-            <p className="font-semibold text-sm text-plat-text">Escudo oficial</p>
-            <p className="text-xs text-plat-text-dim">Gestión de assets de marca por torneo: próximamente en este panel.</p>
-          </div>
-        </div>
+        <LogoUploader />
       </section>
 
       <section>
@@ -365,6 +360,72 @@ function PanelSuperAdmin() {
           ))}
         </motion.div>
       </section>
+    </div>
+  );
+}
+
+function LogoUploader() {
+  const { logoUrl, refrescar } = usePlataformaConfig();
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendo(true);
+    setError(null);
+    setMensaje(null);
+
+    const supabase = createClient();
+    const extension = file.name.split(".").pop();
+    const ruta = `logo-${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("marca-plataforma")
+      .upload(ruta, file, { cacheControl: "3600", upsert: true });
+
+    if (uploadError) {
+      setError("No se pudo subir la imagen: " + uploadError.message);
+      setSubiendo(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("marca-plataforma").getPublicUrl(ruta);
+
+    const { error: updateError } = await supabase
+      .from("plataforma_config")
+      .update({ logo_url: urlData.publicUrl })
+      .eq("id", 1);
+
+    setSubiendo(false);
+
+    if (updateError) {
+      setError("La imagen se subió pero no se pudo guardar: " + updateError.message);
+      return;
+    }
+
+    await refrescar();
+    setMensaje("Listo — ya se actualizó en toda la app.");
+    setTimeout(() => setMensaje(null), 3000);
+  }
+
+  return (
+    <div className="rounded-xl border border-plat-border bg-plat-surface p-4 flex items-center gap-4">
+      <PlatformLogo size={56} />
+      <div className="flex-1">
+        <p className="font-semibold text-sm text-plat-text">Logo de la app</p>
+        <p className="text-xs text-plat-text-dim">
+          {logoUrl ? "Estás usando un logo propio." : "Estás usando el ícono por defecto."} Se ve en el header,
+          el selector de torneos y en cualquier torneo que no sea Tucumán Gravity.
+        </p>
+        {error && <p className="text-xs text-tg-magenta mt-1">{error}</p>}
+        {mensaje && <p className="text-xs text-plat-celeste mt-1">{mensaje}</p>}
+      </div>
+      <label className="shrink-0 rounded-lg bg-plat-celeste text-white text-xs font-semibold uppercase px-3 py-2 cursor-pointer">
+        {subiendo ? "Subiendo…" : "Cambiar logo"}
+        <input type="file" accept="image/*" onChange={handleFile} className="hidden" disabled={subiendo} />
+      </label>
     </div>
   );
 }

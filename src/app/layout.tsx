@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PageTransition from "@/components/PageTransition";
 import { AuthProvider } from "@/components/AuthProvider";
+import { PlataformaConfigProvider } from "@/components/PlataformaConfigProvider";
 import OnboardingGate from "@/components/OnboardingGate";
 import AppShell from "@/components/AppShell";
 import "./globals.css";
@@ -39,16 +40,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${anton.variable} ${barlow.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <AuthProvider>
-          <OnboardingGate />
-          <AppShell>
-            <Header />
-            <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-28 pt-4">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <BottomNav />
-          </AppShell>
-        </AuthProvider>
+        <PlataformaConfigProvider>
+          <AuthProvider>
+            <OnboardingGate />
+            <AppShell>
+              <Header />
+              <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-28 pt-4">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <BottomNav />
+            </AppShell>
+          </AuthProvider>
+        </PlataformaConfigProvider>
       </body>
     </html>
   );
