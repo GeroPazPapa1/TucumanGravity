@@ -86,7 +86,9 @@ export default function RankingList({ filas, torneoId, reglasActivas = false }: 
               </p>
               {fila.equipo && <p className={`text-xs truncate ${dim}`}>{fila.equipo}</p>}
               {detalles.length > 0 && (
-                <p className={`text-[10px] truncate ${dim}`}>{detalles.join(" · ")}</p>
+                <p className={`text-xs font-semibold truncate ${enTorneo ? "text-tg-text" : "text-plat-text"}`}>
+                  {detalles.join(" · ")}
+                </p>
               )}
             </div>
             <p className={`font-display text-xl shrink-0 ${accentText}`}>{fila.totalPuntos}</p>
