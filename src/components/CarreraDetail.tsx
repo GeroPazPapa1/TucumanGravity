@@ -76,18 +76,22 @@ export default function CarreraDetail({
         Cómo llegar en Google Maps
       </a>
 
-      <div className={`rounded-xl border border-dashed p-4 flex items-center gap-3 ${border} ${surfaceMuted}`}>
-        <span className="relative flex h-2.5 w-2.5 shrink-0">
-          <span className={`absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping ${accentBg}`} />
-          <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${accentBg}`} />
-        </span>
-        <div className="flex-1">
-          <p className={`text-xs font-semibold uppercase tracking-widest ${dim}`}>Tiempos en vivo</p>
-          <p className={`text-sm mt-0.5 ${dim}`}>
-            Acá va a ir el cronometraje en vivo de Cronometraje Instantáneo el día de la carrera — espacio
-            reservado, listo para conectar.
-          </p>
+      <div className={`rounded-xl border overflow-hidden ${border} ${surfaceMuted}`}>
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+          <span className={`text-[10px] font-bold uppercase tracking-widest rounded-full border px-2 py-0.5 ${accentBorder} ${accentText}`}>
+            Ejemplo
+          </span>
+          <p className={`text-xs font-semibold uppercase tracking-widest ${dim}`}>Cronometraje en vivo</p>
         </div>
+        <img
+          src="/cronometraje-instantaneo-ejemplo.png"
+          alt="Ejemplo de resultados de Cronometraje Instantáneo por categoría"
+          className="w-full h-auto"
+        />
+        <p className={`text-xs px-4 py-3 ${dim}`}>
+          Así se va a ver el cronometraje en vivo de Cronometraje Instantáneo el día de la carrera. Por ahora
+          es una muestra visual — todavía no está conectado en tiempo real.
+        </p>
       </div>
 
       {grupos.length > 0 ? (
