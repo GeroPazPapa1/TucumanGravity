@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegistroPage() {
+  const [dni, setDni] = useState("");
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +19,11 @@ export default function RegistroPage() {
     e.preventDefault();
     setError(null);
 
+    const dniLimpio = dni.trim();
+    if (!/^\d{6,9}$/.test(dniLimpio)) {
+      setError("Ingresá un DNI válido (solo números, sin puntos).");
+      return;
+    }
     if (password.length < 6) {
       setError("La contraseña tiene que tener al menos 6 caracteres.");
       return;
@@ -33,7 +39,7 @@ export default function RegistroPage() {
       email,
       password,
       options: {
-        data: { nombre },
+        data: { nombre, dni: dniLimpio },
         emailRedirectTo: `${window.location.origin}/ingresar`,
       },
     });
@@ -78,6 +84,20 @@ export default function RegistroPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Campo label="DNI">
+          <input
+            value={dni}
+            onChange={(e) => setDni(e.target.value)}
+            inputMode="numeric"
+            required
+            className="w-full rounded-lg border border-plat-border bg-plat-surface px-3 py-2.5 text-sm text-plat-text"
+            placeholder="Sin puntos, solo números"
+          />
+          <span className="block text-[11px] text-plat-text-dim mt-1.5">
+            Es el primer dato que pedimos: así identificamos a cada corredor una sola vez, sin cuentas duplicadas.
+          </span>
+        </Campo>
+
         <Campo label="Nombre">
           <input
             value={nombre}

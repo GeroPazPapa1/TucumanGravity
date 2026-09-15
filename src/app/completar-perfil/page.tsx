@@ -9,7 +9,7 @@ export default function CompletarPerfilPage() {
   const { user, perfil, cargando, refrescarPerfil } = useAuth();
   const router = useRouter();
 
-  const [dni, setDni] = useState(perfil?.dni ?? "");
+  const [dni, setDni] = useState(perfil?.dni ?? (user?.user_metadata?.dni as string | undefined) ?? "");
   const [fechaNacimiento, setFechaNacimiento] = useState(perfil?.fecha_nacimiento ?? "");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
