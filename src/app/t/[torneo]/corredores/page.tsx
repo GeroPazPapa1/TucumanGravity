@@ -51,10 +51,9 @@ export default async function CorredoresPage({ params, searchParams }: Corredore
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">CORREDORES</h1>
-        <TextDim className="text-sm">
-          {corredores.length} corredores registrados en {torneo.nombre}.
-        </TextDim>
+        <TextDim className="text-xs uppercase tracking-widest font-semibold">Corredores</TextDim>
+        <h1 className="font-display text-3xl tracking-wide">{torneo.nombre}</h1>
+        <TextDim className="text-sm">{corredores.length} corredores registrados.</TextDim>
       </div>
 
       <CorredoresGrid torneoId={torneoId} categorias={categorias ?? []} filtroActivo={filtroActivo} corredores={lista} />

@@ -23,8 +23,9 @@ export default async function CarrerasPage({ params }: CarrerasPageProps) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">CARRERAS</h1>
-        <TextDim className="text-sm">{torneo.nombre} · así se viene dando el campeonato, fecha a fecha.</TextDim>
+        <TextDim className="text-xs uppercase tracking-widest font-semibold">Carreras</TextDim>
+        <h1 className="font-display text-3xl tracking-wide">{torneo.nombre}</h1>
+        <TextDim className="text-sm">Así se viene dando el campeonato, fecha a fecha.</TextDim>
       </div>
 
       <CarrerasList carreras={carreras ?? []} torneoId={torneoId} />

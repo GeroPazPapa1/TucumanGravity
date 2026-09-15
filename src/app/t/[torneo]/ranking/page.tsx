@@ -45,9 +45,10 @@ export default async function RankingPage({ params, searchParams }: RankingPageP
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="font-display text-2xl tracking-wide">RANKING</h1>
+        <TextDim className="text-xs uppercase tracking-widest font-semibold">Ranking</TextDim>
+        <h1 className="font-display text-3xl tracking-wide">{torneo.nombre}</h1>
         <TextDim className="text-sm">
-          {torneo.nombre} · acumulado general por categoría. Se recalcula con cada fecha cargada.
+          Acumulado general por categoría. Se recalcula con cada fecha cargada.
         </TextDim>
       </div>
 
